@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = "Pending Approval";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="pharma-card text-center p-4 p-sm-5 animated-fade">
+            <div class="mb-4">
+                <i class="bi bi-hourglass-split text-warning" style="font-size: 4rem;"></i>
+            </div>
+            <h2 class="fw-bold tracking-tight mb-2">Account Pending Approval</h2>
+            <p class="text-muted mb-4">
+                Your registration is currently pending review by the administrator. Please wait until your profile is approved to access your factory schedules.
+            </p>
+            <div class="p-3 bg-light border rounded-3 text-start mb-4">
+                <p class="small text-muted mb-0">
+                    <i class="bi bi-info-circle-fill me-2 text-primary"></i> If you think this is a mistake or have questions, please reach out to your direct factory manager or the IT support team.
+                </p>
+            </div>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary px-4">
+                <i class="bi bi-house-door me-1"></i> Return Home
+            </a>
+        </div>
+    </div>
+</div>

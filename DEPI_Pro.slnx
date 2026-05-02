@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="DEPI.BLL/DEPI.BLL.csproj" />
+  <Project Path="DEPI.DAL/DEPI.DAL.csproj" />
+  <Project Path="DEPI_Pro/DEPI.PLL.csproj" />
+</Solution>
