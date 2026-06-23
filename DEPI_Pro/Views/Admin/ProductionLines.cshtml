@@ -16,7 +16,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Name</th>
-                        <th>Department ID</th>
+                        <th>Department Name</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -27,7 +27,7 @@
                         {
                             <tr>
                                 <td>@line.Name</td>
-                                <td>@line.DepartmentId</td>
+                                <td>@line.DepartmentName</td>
                                 <td>
                                     <div class="d-flex gap-2">
                                         <a asp-action="EditProductionLine" asp-route-id="@line.ProductionLineId" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
