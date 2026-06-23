@@ -9,10 +9,18 @@ namespace DEPI.BLL.Service.Interfaces
 {
     public interface IAdminService
     {
-        public Task<List<EmployeeStatusDto>> GetPendingEmployeesAsync();
-        public Task<List<EmployeeStatusDto>> ApprovedEmployeeAsync();
-        public Task<List<EmployeeStatusDto>> RejectedEmployeeAsync();
-        public Task ApproveEmployeeAsync(string Email);
-        public Task RejectEmployeeAsync(string Email);
+        Task<List<EmployeeStatusDto>> GetPendingEmployeesAsync();
+        Task<List<EmployeeStatusDto>> ApprovedEmployeeAsync();
+        Task<List<EmployeeStatusDto>> RejectedEmployeeAsync();
+        Task<EmployeeStatusDto> GetPendingEmployeeDetailsAsync(string userId);
+        Task<bool> CompleteEmployeeApprovalAsync(string userId, AdminApprovalDto approvalDto);
+        Task<bool> ApproveEmployeeAsync(string Email);
+        Task<bool> RejectEmployeeAsync(string Email);
+        Task<AdminDashboardStatsDto> GetAdminDashboardStatsAsync();
+        Task<List<UserManagementDto>> GetAllUsersGroupedByDepartmentAsync();
+        Task<UserManagementDto> AddUserAsync(UserManagementDto userDto, string password);
+        Task<UserManagementDto> UpdateUserAsync(string userId, UserManagementDto userDto);
+        Task<bool> DeactivateUserAsync(string userId);
     }
 }
+

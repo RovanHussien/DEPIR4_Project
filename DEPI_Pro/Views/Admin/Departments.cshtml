@@ -1,0 +1,52 @@
+@model List<DEPI.BLL.DTO.DepartmentDto>
+@{
+    ViewData["Title"] = "Departments";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Departments</h2>
+    <a asp-action="CreateDepartment" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Add Department</a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Manager SSN</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var dept in Model)
+                        {
+                            <tr>
+                                <td>@dept.Name</td>
+                                <td>@(string.IsNullOrEmpty(dept.ManagerSsn) ? "Unassigned" : dept.ManagerSsn)</td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a asp-action="EditDepartment" asp-route-id="@dept.DepartmentId" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                                        <form asp-action="DeleteDepartment" asp-route-id="@dept.DepartmentId" method="post" onsubmit="return confirm('Are you sure you want to delete this department?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">No departments found</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,39 @@
+@model DEPI.BLL.DTO.ProductionLineDto
+@{
+    ViewData["Title"] = "Add Production Line";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">Add Production Line</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="CreateProductionLine" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label">Production Line Name *</label>
+                        <input asp-for="Name" class="form-control" placeholder="e.g., Line A" required />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="DepartmentId" class="form-label">Department *</label>
+                        <select asp-for="DepartmentId" class="form-select" asp-items="ViewBag.Departments" required>
+                            <option value="">Select Department</option>
+                        </select>
+                        <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save</button>
+                        <a asp-action="ProductionLines" class="btn btn-secondary"><i class="bi bi-x-circle me-1"></i> Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,4 +1,4 @@
-﻿using DEPI.DAL.DbContext;
+using DEPI.DAL.DbContext;
 using DEPI.DAL.Enums;
 using DEPI.DAL.Model;
 using DEPI.DAL.Repo.Interfaces;
@@ -58,16 +58,22 @@ namespace DEPI.DAL.Repo.Implementation
             existingEmployee.FirstName = employee.FirstName;
             existingEmployee.LastName = employee.LastName;
             existingEmployee.Salary = employee.Salary;
+            existingEmployee.Sex = employee.Sex;
+            existingEmployee.BirthDate = employee.BirthDate;
             existingEmployee.Address = employee.Address;
             existingEmployee.PhoneNumber = employee.PhoneNumber;
             existingEmployee.VacationBalance = employee.VacationBalance;
             existingEmployee.DefaultRole = employee.DefaultRole;
             existingEmployee.ManagedDepartment = employee.ManagedDepartment;
             existingEmployee.Manager = employee.Manager;
+            existingEmployee.ManagerSsn = employee.ManagerSsn;
             existingEmployee.Shift = employee.Shift;
+            existingEmployee.ShiftId = employee.ShiftId;
             existingEmployee.ProductionLine = employee.ProductionLine;
+            existingEmployee.ProductionLineId = employee.ProductionLineId;
+
             _context.Employees.Update(existingEmployee);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return IdentityResult.Success;
         }
     }

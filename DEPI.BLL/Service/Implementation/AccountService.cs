@@ -1,7 +1,8 @@
-﻿using DEPI.BLL.DTO;
+using DEPI.BLL.DTO;
 using DEPI.BLL.Service.Interfaces;
 using DEPI.DAL.Model;
 using DEPI.DAL.Models;
+using DEPI.DAL.Enums;
 using DEPI.DAL.Repo.Implementation;
 using DEPI.DAL.Repo.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -32,9 +33,16 @@ namespace DEPI.BLL.Service.Implementation
                 Email = employeeDto.Email,
                 UserName = employeeDto.FirstName + employeeDto.LastName,
                 PasswordHash = employeeDto.Password,
-                PhoneNumber = employeeDto.PhoneNumber.ToString()
+                PhoneNumber = employeeDto.PhoneNumber.ToString(),
+                ActualRole = "Employee"
             };
-            await _userRepo.CreateUserAsync(user, user.PasswordHash);
+            
+            var userResult = await _userRepo.CreateUserAsync(user, user.PasswordHash);
+            if (!userResult.Succeeded)
+            {
+                return userResult;
+            }
+
             var employee = new Employee
             {
                 EmployeeSsn = employeeDto.EmployeeId,
@@ -71,10 +79,16 @@ namespace DEPI.BLL.Service.Implementation
         public async Task<SignInResult> LoginAsync(LoginDto loginDto)
         {
             var user = await _userRepo.GetByEmailAsync(loginDto.Email);
+            if (user == null)
+                return SignInResult.Failed;
+
             var result = await _userRepo.CheckPasswordAsync(user, loginDto.Password);
             if (result)
             {
-                await _signInManager.SignInAsync(user,loginDto.RememberMe);
+                if (user.Status == EmployeeStatus.Approved)
+                {
+                    await _signInManager.SignInAsync(user, loginDto.RememberMe);
+                }
                 return SignInResult.Success;
             }
             return SignInResult.Failed;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,6 +19,7 @@ namespace DEPI.DAL.DbContext
         public DbSet<Department> Departments { get; set; }
         public DbSet<EmployeeDepartment> EmployeeDepartments { get; set; }
         public DbSet<Shift> Shifts { get; set; }
+
         public DbSet<Schedule> Schedules { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
         public DbSet<ProductionLine> ProductionLines { get; set; }
@@ -88,6 +89,8 @@ namespace DEPI.DAL.DbContext
             {
                 entity.HasKey(s => s.ShiftId);
             });
+
+
 
             modelBuilder.Entity<Schedule>(entity =>
             {
