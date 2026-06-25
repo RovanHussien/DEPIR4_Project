@@ -21,5 +21,6 @@ namespace DEPI.DAL.Model
         // navigation property for requesting employee's schedule
         public Schedule? Schedule { get; set; }
         public int? ScheduleId { get; set; }
+        public string? Status { get; set; } = "Pending";
     }
 }

@@ -27,9 +27,16 @@ namespace DEPI.DAL.Repo.Implementation
             _context.SaveChanges();
             return Task.FromResult(IdentityResult.Success);
         }
-        public Task<IdentityResult> DeleteEmployeeAsync(string id)
-        {       
-            throw new NotImplementedException();
+        public async Task<IdentityResult> DeleteEmployeeAsync(string id)
+        {
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.EmployeeSsn == id);
+            if (employee == null)
+            {
+                throw new Exception("Employee not found");
+            }
+            _context.Employees.Remove(employee);
+            await _context.SaveChangesAsync();
+            return IdentityResult.Success;
         }
 
         public async Task<List<Employee>> GetAllEmployees()
@@ -38,16 +45,26 @@ namespace DEPI.DAL.Repo.Implementation
             return employees;
         }
 
+        
+
+        public async Task<Employee> GetEmployeeByUserIdAsync(string userId)
+        {
+            return await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == userId);
+        }
         public async Task<Employee> GetEmployeeById(string id)
         {
-            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.EmployeeSsn == id);
+            var employee = await _context.Employees
+                .Include(e => e.VacationRequests)
+                .Include(e => e.ReceivedSwapRequests)
+                .FirstOrDefaultAsync(e => e.EmployeeSsn == id);
+
             if (employee == null)
             {
                 throw new Exception("Employee not found");
             }
             return employee;
         }
-
         public async Task<IdentityResult> UpdateEmployeeAsync(string id, Employee employee)
         {
             var existingEmployee = await _context.Employees.FirstOrDefaultAsync(e => e.EmployeeSsn == id);

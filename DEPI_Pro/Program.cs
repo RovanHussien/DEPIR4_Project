@@ -20,12 +20,23 @@ namespace DEPI_Pro
             builder.Services.AddDbContext<ApplicationDbContext>(
                 options => options.UseSqlServer(
                     builder.Configuration.GetConnectionString("DefaultConnection")));
+
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+
             builder.Services.AddScoped<IEmployeeRepo, EmployeeRepo>();
             builder.Services.AddScoped<IUserRepo, UserRepo>();
+
+            builder.Services.AddScoped<IScheduleRepo, ScheduleRepo>();
+            builder.Services.AddScoped<IVacationRequestRepo, VacationRequestRepo>();
+            builder.Services.AddScoped<ISwapRequestRepo, SwapRequestRepo>();
+
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddScoped<IAdminService, AdminService>();
+
+            builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

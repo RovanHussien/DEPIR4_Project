@@ -58,6 +58,7 @@ namespace DEPI.DAL.DbContext
                 .HasForeignKey<Employee>(e => e.UserId)
                 .IsRequired(false);
             });
+           
 
             modelBuilder.Entity<Department>(entity =>
             {

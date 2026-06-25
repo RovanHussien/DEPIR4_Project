@@ -13,9 +13,11 @@ namespace DEPI.DAL.Repo.Interfaces
     public interface IEmployeeRepo
     {
         public  Task<List<Employee>> GetAllEmployees();
-        public Task<Employee> GetEmployeeById(string id);
+       
         public Task<IdentityResult> AddEmployee(Employee employee);
         public Task<IdentityResult> UpdateEmployeeAsync(string id, Employee employee);
         public Task<IdentityResult> DeleteEmployeeAsync(string id);
+        Task<Employee> GetEmployeeByUserIdAsync(string userId);
+        public Task<Employee> GetEmployeeById(string id);
     }
 }

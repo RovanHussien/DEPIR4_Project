@@ -1,0 +1,267 @@
+﻿@model DEPI.DAL.Model.Employee
+
+@{
+    ViewData["Title"] = "Employee Dashboard";
+    var schedules = ViewData["Schedules"] as IEnumerable<DEPI.DAL.Model.Schedule> ?? new List<DEPI.DAL.Model.Schedule>();
+}
+
+<div class="container mt-5" dir="ltr">
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show text-left mb-4" role="alert">
+            <strong>🎯 Success!</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger alert-dismissible fade show text-left mb-4" role="alert">
+            <strong>⚠️ Validation Error:</strong>
+            <div asp-validation-summary="All" class="text-danger small mt-2"></div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show text-left mb-4" role="alert">
+            <strong>⚠️ Error!</strong> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <div class="card-body">
+                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                        👤
+                    </div>
+                    <h4 class="card-title font-weight-bold mb-1">@Model.FirstName @Model.LastName</h4>
+                    <p class="text-muted small">SSN: @Model.EmployeeSsn</p>
+                    <hr />
+                    <div class="text-left">
+                        <p class="mb-2"><strong> Phone:</strong> @Model.PhoneNumber</p>
+                        <p class="mb-2"><strong> Address:</strong> @Model.Address</p>
+                        <p class="mb-2"><strong> Salary:</strong> @Model.Salary.ToString("C")</p>
+                        <p class="mb-2"><strong> Gender:</strong> @Model.Sex</p>
+                        <p class="mb-2"><strong> Birth Date:</strong> @Model.BirthDate.ToString("dd-MM-yyyy")</p>
+                        <p class="mb-0"><strong> Vacation Balance:</strong> <span class="badge bg-info text-dark">@(Model.VacationBalance ?? 0) Days</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm p-4">
+
+                <ul class="nav nav-tabs mb-4" id="employeeTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-bold" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button" role="tab">Work Schedule</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold" id="swap-tab" data-bs-toggle="tab" data-bs-target="#swap" type="button" role="tab">Request Swap</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold" id="vacation-tab" data-bs-toggle="tab" data-bs-target="#vacation" type="button" role="tab">Request Vacation</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab">Requests Status</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="employeeTabContent">
+
+                    <!-- Work Schedule Tab -->
+                    <div class="tab-pane fade show active" id="schedule" role="tabpanel">
+                        <h5 class="mb-3 font-weight-bold text-primary">Your Current Shifts</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle text-left">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Shift</th>
+                                        <th>Production Line</th>
+                                        <th>Mission</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (schedules == null || !schedules.Any())
+                                    {
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">No shifts scheduled for you at the moment.</td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var item in schedules)
+                                        {
+                                            <tr>
+                                                <td><strong>@item.ScheduleDate.ToString("dd-MM-yyyy")</strong></td>
+                                                <td>@(item.Shift?.Name ?? "N/A")</td>
+                                                <td><span class="badge bg-secondary">@(item.ProductionLine?.Name ?? "General Line")</span></td>
+                                                <td>@(item.Mission?.Purpose ?? "Standard")</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Request Swap Tab -->
+                    <div class="tab-pane fade" id="swap" role="tabpanel">
+                        <h5 class="mb-3 font-weight-bold text-primary">Request a Shift Swap</h5>
+                        <form asp-action="RequestSwap" method="post" class="text-left">
+                            <input type="hidden" name="requestingSsn" value="@Model.EmployeeSsn" />
+                            <input type="hidden" name="scheduleId" value="0" />
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Recipient Employee SSN :</label>
+                                <input type="text" name="recipientSsn" class="form-control" placeholder="Enter your colleague's SSN accurately" required />
+                            </div>
+
+                            <button type="submit" class="btn btn-warning px-4 fw-bold">Submit Swap Request 🔄</button>
+                        </form>
+                    </div>
+
+                    <!-- Request Vacation Tab -->
+                    <div class="tab-pane fade" id="vacation" role="tabpanel">
+                        <h5 class="mb-3 font-weight-bold text-primary">Apply for a New Vacation</h5>
+                        <form asp-action="ApplyVacation" method="post" class="text-left">
+                            <input type="hidden" name="EmployeeSsn" value="@Model.EmployeeSsn" />
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Start Date:</label>
+                                    <input type="date" name="StartDate" class="form-control" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">End Date:</label>
+                                    <input type="date" name="EndDate" class="form-control" required />
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Reason for Vacation:</label>
+                                <textarea name="Reason" class="form-control" rows="3" placeholder="Please state the clear reason for your vacation request..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary px-4 fw-bold">Submit Application</button>
+                        </form>
+                    </div>
+
+                    <!-- Requests Status Tab -->
+                    <div class="tab-pane fade" id="requests" role="tabpanel">
+
+                        <h5 class="mb-3 font-weight-bold text-primary">Your Vacation Requests</h5>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered align-middle text-left">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Reason</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.VacationRequests == null || !Model.VacationRequests.Any())
+                                    {
+                                        <tr><td colspan="4" class="text-center text-muted">No vacation requests found.</td></tr>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var vac in Model.VacationRequests)
+                                        {
+                                            <tr>
+                                                <td>@vac.StartDate.ToString("dd-MM-yyyy")</td>
+                                                <td>@vac.EndDate.ToString("dd-MM-yyyy")</td>
+                                                <td>@vac.Reason</td>
+                                                <td>
+                                                    <span class="badge @(vac.Status.ToString() == "Approved" ? "bg-success" : vac.Status.ToString() == "Rejected" ? "bg-danger" : "bg-warning")">
+                                                        @vac.Status
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h5 class="mb-3 font-weight-bold text-warning">Incoming Swap Requests</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle text-left">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>From (Colleague SSN)</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.ReceivedSwapRequests == null || !Model.ReceivedSwapRequests.Any())
+                                    {
+                                        <tr><td colspan="2" class="text-center text-muted">No incoming swap requests.</td></tr>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var swap in Model.ReceivedSwapRequests)
+                                        {
+                                            <tr>
+                                                <td>@swap.RequestingEmployeeId</td>
+                                                <td>
+                                                    <form asp-action="RespondToSwap" method="post" class="d-inline">
+                                                        <input type="hidden" name="swapId" value="@swap.RequestId" />
+                                                        <button type="submit" name="status" value="Approved" class="btn btn-sm btn-success fw-bold me-1">Accept ✅</button>
+                                                        <button type="submit" name="status" value="Rejected" class="btn btn-sm btn-danger fw-bold">Reject ❌</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    body {
+        background-color: #f4f6f9;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .card {
+        border-radius: 15px;
+    }
+
+    .nav-tabs .nav-link {
+        color: #495057;
+        border: none;
+        border-bottom: 3px solid transparent;
+    }
+
+        .nav-tabs .nav-link.active {
+            color: #0d6efd;
+            border: none;
+            border-bottom: 3px solid #0d6efd;
+            background-color: transparent;
+        }
+
+    .text-left {
+        text-align: left !important;
+    }
+
+    .table th {
+        font-weight: 600;
+        color: #495057;
+    }
+</style>
