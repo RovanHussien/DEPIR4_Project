@@ -1,0 +1,53 @@
+﻿@model List<DEPI.BLL.DTO.ManagerLeaveRequestDto>
+@{
+    ViewData["Title"] = "Leave Requests";
+}
+
+<h2>Leave Requests</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<table class="table table-striped table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>Employee</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var leave in Model)
+        {
+            <tr>
+                <td>@leave.EmployeeName</td>
+                <td>@leave.StartDate.ToShortDateString()</td>
+                <td>@leave.EndDate.ToShortDateString()</td>
+                <td>@leave.Reason</td>
+                <td>@leave.Status</td>
+                <td>
+                    @if (leave.Status == "Pending")
+                    {
+                        <form asp-action="ApproveLeave" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@leave.VacationRequestId" />
+                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form asp-action="RejectLeave" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@leave.VacationRequestId" />
+                            <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

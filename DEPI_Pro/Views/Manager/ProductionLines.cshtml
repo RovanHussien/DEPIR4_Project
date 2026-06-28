@@ -1,0 +1,24 @@
+﻿@model List<DEPI.BLL.DTO.ManagerProductionLineDto>
+@{
+    ViewData["Title"] = "Production Lines";
+}
+
+<h2>Department Production Lines</h2>
+
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            <tr>
+                <td>@p.ProductionLineId</td>
+                <td>@p.Name</td>
+            </tr>
+        }
+    </tbody>
+</table>

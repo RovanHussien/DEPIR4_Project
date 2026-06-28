@@ -1,0 +1,28 @@
+﻿@model List<DEPI.BLL.DTO.ManagerEmployeeDto>
+@{
+    ViewData["Title"] = "Department Employees";
+}
+
+<h2>Department Employees</h2>
+
+<table class="table table-striped table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>SSN</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Job Title</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var emp in Model)
+        {
+            <tr>
+                <td>@emp.EmployeeSsn</td>
+                <td>@emp.FullName</td>
+                <td>@emp.Email</td>
+                <td>@emp.JobTitle</td>
+            </tr>
+        }
+    </tbody>
+</table>
