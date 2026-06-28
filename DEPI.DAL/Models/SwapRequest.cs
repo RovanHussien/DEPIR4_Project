@@ -19,5 +19,6 @@ namespace DEPI.DAL.Model
 
         public Schedule? Schedule { get; set; }
         public int? ScheduleId { get; set; }
+        public string? Status { get; set; } = "Pending";
     }
 }
