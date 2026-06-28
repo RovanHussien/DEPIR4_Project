@@ -15,11 +15,9 @@ namespace DEPI.DAL.Model
         public string Reason { get; set; }
         public VacationRequestStatus Status { get; set; }
 
-        // navigation property for employee
         public Employee? Employee { get; set; }
         public string? EmployeeSsn { get; set; }
 
-        // navigation property for schedule
         public List<Schedule> Schedules { get; set; }   
     }
 }

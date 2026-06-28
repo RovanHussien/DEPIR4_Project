@@ -17,6 +17,7 @@ namespace DEPI_Pro
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddScoped<IManagerService, ManagerService>();
             // Add services to the container.
             builder.Services.AddControllersWithViews();
             builder.Services.AddDbContext<ApplicationDbContext>(
@@ -46,6 +47,7 @@ namespace DEPI_Pro
                 await SeedRoles(roleManager);
                 await SeedAdminUser(userManager);
                 await SeedManagerUsers(userManager, context);
+                await SeedManagerDepartment(context);
             }
 
             // Configure the HTTP request pipeline.
@@ -110,7 +112,6 @@ namespace DEPI_Pro
 
             if (result.Succeeded)
             {
-                // Assign Admin role
                 await userManager.AddToRoleAsync(adminUser, "Admin");
                 Console.WriteLine($"✓ Admin user created successfully");
                 Console.WriteLine($"  Email: {adminEmail}");
@@ -134,12 +135,12 @@ namespace DEPI_Pro
         }
 
         private static async Task SeedSingleManager(
-            UserManager<ApplicationUser> userManager, 
-            ApplicationDbContext context, 
-            string email, 
-            string password, 
-            string ssn, 
-            string firstName, 
+            UserManager<ApplicationUser> userManager,
+            ApplicationDbContext context,
+            string email,
+            string password,
+            string ssn,
+            string firstName,
             string lastName)
         {
             var existingUser = await userManager.FindByEmailAsync(email);
@@ -164,7 +165,7 @@ namespace DEPI_Pro
             {
                 await userManager.AddToRoleAsync(user, "Manager");
                 Console.WriteLine($"✓ Manager user created successfully ({email})");
-                
+
                 var existingEmployee = await context.Employees.FindAsync(ssn);
                 if (existingEmployee == null)
                 {
@@ -195,6 +196,35 @@ namespace DEPI_Pro
                     Console.WriteLine($"  - {error.Code}: {error.Description}");
                 }
             }
+        }
+
+        private static async Task SeedManagerDepartment(ApplicationDbContext context)
+        {
+            var existingLink = await context.Departments.FirstOrDefaultAsync(d => d.ManagerSsn == "MGR001");
+            if (existingLink != null)
+            {
+                Console.WriteLine("✓ Manager department link already exists (MGR001)");
+                return;
+            }
+
+            var unassignedDepartment = await context.Departments.FirstOrDefaultAsync(d => d.ManagerSsn == null);
+            if (unassignedDepartment != null)
+            {
+                unassignedDepartment.ManagerSsn = "MGR001";
+                await context.SaveChangesAsync();
+                Console.WriteLine($"✓ Linked existing department '{unassignedDepartment.Name}' to Manager (MGR001)");
+                return;
+            }
+
+            var newDepartment = new Department
+            {
+                Name = "Production Department",
+                EmployeeCount = 0,
+                ManagerSsn = "MGR001"
+            };
+            context.Departments.Add(newDepartment);
+            await context.SaveChangesAsync();
+            Console.WriteLine("✓ Created new department and linked it to Manager (MGR001)");
         }
     }
 }
