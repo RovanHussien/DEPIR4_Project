@@ -16,13 +16,11 @@ namespace DEPI.DAL.Model
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
-        // navigation property for employee
         public Employee? AuthorizedEmployee { get; set; }
         public string? AuthorizedEmployeeSsn { get; set; }
         public Employee? GoesOnEmployee { get; set; }
         public string? GoesOnEmployeeSsn { get; set; }
 
-        // navigation property for schedule
         public List<Schedule> Schedules { get; set; }
 
     }

@@ -482,3 +482,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+#More Files
+.claude/
+DbRelation.md
+deepseek_markdown_20260501_3b83ba.md
+seed-data.sql

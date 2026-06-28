@@ -23,15 +23,36 @@ namespace DEPI.PLL.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await _accountService.RegisterEmployeeAsync(employeeDto);
-                if (result.Succeeded)
+                try
                 {
-                    return RedirectToAction("Login");
+                    var result = await _accountService.RegisterEmployeeAsync(employeeDto);
+                    if (result.Succeeded)
+                    {
+                        return RedirectToAction("Login");
+                    }
+                    else
+                    {
+                        foreach (var error in result.Errors)
+                        {
+                            ModelState.AddModelError("", error.Description);
+                        }
+                    }
                 }
-                else
+                catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
                 {
-                    ModelState.AddModelError("", "Registration failed. Please try again.");
-                    return View(employeeDto);
+                    var errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                    if (errorMsg.Contains("PRIMARY KEY") || errorMsg.Contains("duplicate key"))
+                    {
+                        ModelState.AddModelError("EmployeeId", "This Employee ID / SSN is already registered.");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", "Database Error: " + errorMsg);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", "An unexpected error occurred: " + ex.Message);
                 }
             }
             return View(employeeDto);
@@ -42,17 +63,25 @@ namespace DEPI.PLL.Controllers
             return View();
         }
         [HttpPost]
-        public async Task<IActionResult> Login(LoginDto login)
+        public async Task<IActionResult> Login(LoginDto login, [FromServices] Microsoft.AspNetCore.Identity.UserManager<DEPI.DAL.Models.ApplicationUser> userManager)
         {
             if (ModelState.IsValid) 
             {
-                var user = await _accountService.LoginAsync(login);
-                if (user != null) 
+                var result = await _accountService.LoginAsync(login);
+                if (result.Succeeded) 
                 {
-                    if (await _accountService.CheckUserStatus(login.Email) == "Pending") 
+                    var status = await _accountService.CheckUserStatus(login.Email);
+                    if (status == "Pending" || status == "Rejected") 
                     {
                         return View("Pending");
                     }
+                    
+                    var appUser = await userManager.FindByEmailAsync(login.Email);
+                    if (appUser != null && await userManager.IsInRoleAsync(appUser, "Admin"))
+                    {
+                        return RedirectToAction("Index", "Admin");
+                    }
+
                     return RedirectToAction("Index", "Home");
                 }
                 ModelState.AddModelError("", "Invalid login attempt.");

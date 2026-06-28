@@ -1,0 +1,28 @@
+﻿@model List<DEPI.BLL.DTO.ManagerShiftChangeDto>
+@{
+    ViewData["Title"] = "Shift Change Requests";
+}
+
+<h2>Shift Change Requests</h2>
+
+<table class="table table-striped table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>Requesting Employee</th>
+            <th>Recipient Employee</th>
+            <th>Shift</th>
+            <th>Schedule Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var sc in Model)
+        {
+            <tr>
+                <td>@sc.RequestingEmployeeName</td>
+                <td>@sc.RecipientEmployeeName</td>
+                <td>@sc.ShiftName</td>
+                <td>@(sc.ScheduleDate?.ToShortDateString())</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -250,3 +250,54 @@ label {
 .animated-fade {
   animation: fadeIn 0.4s ease-out forwards;
 }
+
+/* Premium Register Link Styling */
+.nav-register-link {
+  color: #000000 !important;
+  font-weight: 600 !important;
+  transition: var(--transition-normal);
+}
+
+.nav-register-link:hover {
+  color: var(--color-primary) !important;
+  background-color: var(--color-bg) !important;
+}
+
+/* Premium Navbar Dropdown Menu Styling */
+.navbar-nav .dropdown-menu {
+  background: var(--color-surface);
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  border-radius: var(--border-radius) !important;
+  box-shadow: var(--box-shadow-lg) !important;
+  padding: 0.5rem !important;
+  margin-top: 0.5rem !important;
+  display: block;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar-nav .dropdown-menu.show {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.navbar-nav .dropdown-item {
+  font-family: var(--font-main);
+  font-weight: 500;
+  color: var(--color-text-muted) !important;
+  padding: 0.6rem 1rem !important;
+  border-radius: var(--border-radius-sm) !important;
+  transition: var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-nav .dropdown-item:hover {
+  color: var(--color-primary) !important;
+  background-color: var(--color-bg) !important;
+  transform: translateX(4px);
+}

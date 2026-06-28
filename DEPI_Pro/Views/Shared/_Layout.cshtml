@@ -30,10 +30,21 @@
                             </a>
                         @* </li>
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Admin" asp-action="DisplayAllEmployee">
-                                <i class="bi bi-people me-1"></i> Employees
-                            </a>
-                        </li> *@
+                            @if (User.IsInRole("Manager"))
+                            {
+                                <a class="nav-link" asp-controller="Manager" asp-action="Index">
+                                    <i class="bi bi-kanban me-1"></i> Manager Panel 
+                                </a>
+                            }
+                        </li> 
+                        <li class="nav-item">
+                            @if (User.IsInRole("Manager"))
+                            {
+                                <a class="nav-link" asp-controller="Manager" asp-action="Profile">
+                                    <i class="bi bi-person-circle me-1"></i> My Profile
+                                    </a>
+                            }
+                            </li>
                     </ul>
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
@@ -59,7 +70,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link btn btn-primary text-white ms-2 px-3" asp-area="" asp-controller="Account" asp-action="Register" style="border-radius: var(--border-radius-sm);">
+                                <a class="nav-link nav-register-link ms-2 px-3" asp-area="" asp-controller="Account" asp-action="Register">
                                     <i class="bi bi-person-plus me-1"></i> Register
                                 </a>
                             </li>
