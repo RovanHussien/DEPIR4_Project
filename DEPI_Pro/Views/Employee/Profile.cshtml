@@ -1,86 +1,159 @@
 ﻿@model DEPI.DAL.Model.Employee
 
 @{
+    var activeTab = ViewData["ActiveTab"]?.ToString() ?? "schedule";
     ViewData["Title"] = "Employee Dashboard";
     var schedules = ViewData["Schedules"] as IEnumerable<DEPI.DAL.Model.Schedule> ?? new List<DEPI.DAL.Model.Schedule>();
+    var employeeRole = ViewData["Role"] as string ?? "Employee";
+
+    Func<string, string> tabBtnActive = (tab) => activeTab == tab ? "active" : "";
+    Func<string, string> panelActive = (tab) => activeTab == tab ? "show active" : "";
+    Func<string, string> ariaSel = (tab) => activeTab == tab ? "true" : "false";
 }
 
-<div class="container mt-5" dir="ltr">
+<div class="emp-wrapper" dir="ltr">
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show text-left mb-4" role="alert">
-            <strong>🎯 Success!</strong> @TempData["SuccessMessage"]
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-
     @if (!ViewData.ModelState.IsValid)
     {
-        <div class="alert alert-danger alert-dismissible fade show text-left mb-4" role="alert">
-            <strong>⚠️ Validation Error:</strong>
-            <div asp-validation-summary="All" class="text-danger small mt-2"></div>
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <div asp-validation-summary="All" class="text-danger small mt-1"></div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show text-left mb-4" role="alert">
-            <strong>⚠️ Error!</strong> @TempData["ErrorMessage"]
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-x-circle-fill me-2"></i> @TempData["ErrorMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <div class="row">
+    <div class="row g-4">
 
-        <div class="col-md-4 mb-4">
-            <div class="card border-0 shadow-sm text-center p-3">
-                <div class="card-body">
-                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
-                        👤
+        <!-- Profile Card -->
+        <div class="col-lg-3 col-md-4">
+            <div class="profile-card">
+                <!-- Cover -->
+                <div class="profile-cover"></div>
+
+                <!-- Avatar -->
+                <div class="profile-avatar-wrap">
+                    @if (Model.ProfilePicture != null)
+                    {
+                        <img src="/images/profiles/@Model.ProfilePicture" class="profile-avatar" alt="Profile picture" />
+                    }
+                    else
+                    {
+                        <div class="profile-avatar profile-avatar-placeholder">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                    }
+                    <label for="profilePictureInput" class="avatar-upload-btn" title="Change photo">
+                        <i class="bi bi-camera-fill"></i>
+                    </label>
+                </div>
+
+                <!-- Hidden upload form: kept OUTSIDE the label/avatar markup.
+                     (A <form> can't legally live inside a <label> — browsers will
+                     silently rearrange that markup, which is what made the photo
+                     upload behave unpredictably.) -->
+                <form asp-action="UploadProfilePicture" method="post" enctype="multipart/form-data" id="photoForm" class="d-none">
+                    <input type="hidden" name="ssn" value="@Model.EmployeeSsn" />
+                    <input type="file" id="profilePictureInput" name="profilePicture" accept="image/*" onchange="document.getElementById('photoForm').submit()" />
+                </form>
+
+                <!-- Name -->
+                <div class="profile-name-section">
+                    <h5 class="profile-name">@Model.FirstName @Model.LastName</h5>
+                    <span class="profile-role">@employeeRole</span>
+                </div>
+
+                <!-- Stats -->
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="stat-value text-info">@(Model.VacationBalance ?? 0)</span>
+                        <span class="stat-label">Vacation Days</span>
                     </div>
-                    <h4 class="card-title font-weight-bold mb-1">@Model.FirstName @Model.LastName</h4>
-                    <p class="text-muted small">SSN: @Model.EmployeeSsn</p>
-                    <hr />
-                    <div class="text-left">
-                        <p class="mb-2"><strong> Phone:</strong> @Model.PhoneNumber</p>
-                        <p class="mb-2"><strong> Address:</strong> @Model.Address</p>
-                        <p class="mb-2"><strong> Salary:</strong> @Model.Salary.ToString("C")</p>
-                        <p class="mb-2"><strong> Gender:</strong> @Model.Sex</p>
-                        <p class="mb-2"><strong> Birth Date:</strong> @Model.BirthDate.ToString("dd-MM-yyyy")</p>
-                        <p class="mb-0"><strong> Vacation Balance:</strong> <span class="badge bg-info text-dark">@(Model.VacationBalance ?? 0) Days</span></p>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-value text-warning">@Model.VacationRequestsCount</span>
+                        <span class="stat-label">Requests Left</span>
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div class="profile-info">
+                    <div class="info-item">
+                        <i class="bi bi-fingerprint text-primary"></i>
+                        <span>@Model.EmployeeSsn</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-telephone-fill text-success"></i>
+                        <span>@Model.PhoneNumber</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-geo-alt-fill text-danger"></i>
+                        <span>@Model.Address</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-cash-stack text-success"></i>
+                        <span>@Model.Salary.ToString("C")</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-gender-ambiguous text-purple"></i>
+                        <span>@Model.Sex</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-cake2-fill text-pink"></i>
+                        <span>@Model.BirthDate.ToString("dd MMM yyyy")</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-8">
-            <div class="card border-0 shadow-sm p-4">
+        <!-- Main Content -->
+        <div class="col-lg-9 col-md-8">
+            <div class="main-card">
 
-                <ul class="nav nav-tabs mb-4" id="employeeTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active fw-bold" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button" role="tab">Work Schedule</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link fw-bold" id="swap-tab" data-bs-toggle="tab" data-bs-target="#swap" type="button" role="tab">Request Swap</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link fw-bold" id="vacation-tab" data-bs-toggle="tab" data-bs-target="#vacation" type="button" role="tab">Request Vacation</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link fw-bold" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab">Requests Status</button>
-                    </li>
-                </ul>
+                <!-- Tabs -->
+                <div class="custom-tabs" id="employeeTab" role="tablist">
+                    <button type="button" id="schedule-tab-btn" class="tab-btn @tabBtnActive("schedule")"
+                            data-tab-target="schedule" role="tab" aria-controls="schedule" aria-selected="@ariaSel("schedule")">
+                        <i class="bi bi-calendar3"></i> Schedule
+                    </button>
+                    <button type="button" id="swap-tab-btn" class="tab-btn @tabBtnActive("swap")"
+                            data-tab-target="swap" role="tab" aria-controls="swap" aria-selected="@ariaSel("swap")">
+                        <i class="bi bi-arrow-left-right"></i> Swap Shift
+                    </button>
+                    <button type="button" id="vacation-tab-btn" class="tab-btn @tabBtnActive("vacation")"
+                            data-tab-target="vacation" role="tab" aria-controls="vacation" aria-selected="@ariaSel("vacation")">
+                        <i class="bi bi-umbrella-fill"></i> Vacation
+                    </button>
+                    <button type="button" id="requests-tab-btn" class="tab-btn @tabBtnActive("requests")"
+                            data-tab-target="requests" role="tab" aria-controls="requests" aria-selected="@ariaSel("requests")">
+                        <i class="bi bi-clock-history"></i> Requests
+                    </button>
+                </div>
 
-                <div class="tab-content" id="employeeTabContent">
+                <div class="tab-content p-4" id="employeeTabContent">
 
-                    <!-- Work Schedule Tab -->
-                    <div class="tab-pane fade show active" id="schedule" role="tabpanel">
-                        <h5 class="mb-3 font-weight-bold text-primary">Your Current Shifts</h5>
+                    <!-- Work Schedule -->
+                    <div class="tab-pane fade @panelActive("schedule")" id="schedule" role="tabpanel" aria-labelledby="schedule-tab-btn">
+                        <div class="section-header">
+                            <i class="bi bi-calendar3-week text-primary"></i>
+                            <h5>Your Current Shifts</h5>
+                        </div>
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle text-left">
-                                <thead class="table-light">
+                            <table class="table modern-table">
+                                <thead>
                                     <tr>
                                         <th>Date</th>
                                         <th>Shift</th>
@@ -92,7 +165,10 @@
                                     @if (schedules == null || !schedules.Any())
                                     {
                                         <tr>
-                                            <td colspan="4" class="text-center text-muted">No shifts scheduled for you at the moment.</td>
+                                            <td colspan="4" class="empty-state">
+                                                <i class="bi bi-calendar-x"></i>
+                                                <p>No shifts scheduled yet</p>
+                                            </td>
                                         </tr>
                                     }
                                     else
@@ -100,9 +176,9 @@
                                         @foreach (var item in schedules)
                                         {
                                             <tr>
-                                                <td><strong>@item.ScheduleDate.ToString("dd-MM-yyyy")</strong></td>
+                                                <td><span class="date-badge">@item.ScheduleDate.ToString("dd MMM yyyy")</span></td>
                                                 <td>@(item.Shift?.Name ?? "N/A")</td>
-                                                <td><span class="badge bg-secondary">@(item.ProductionLine?.Name ?? "General Line")</span></td>
+                                                <td><span class="badge bg-primary bg-opacity-10 text-primary">@(item.ProductionLine?.Name ?? "General")</span></td>
                                                 <td>@(item.Mission?.Purpose ?? "Standard")</td>
                                             </tr>
                                         }
@@ -112,55 +188,84 @@
                         </div>
                     </div>
 
-                    <!-- Request Swap Tab -->
-                    <div class="tab-pane fade" id="swap" role="tabpanel">
-                        <h5 class="mb-3 font-weight-bold text-primary">Request a Shift Swap</h5>
-                        <form asp-action="RequestSwap" method="post" class="text-left">
-                            <input type="hidden" name="requestingSsn" value="@Model.EmployeeSsn" />
-                            <input type="hidden" name="scheduleId" value="0" />
-
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Recipient Employee SSN :</label>
-                                <input type="text" name="recipientSsn" class="form-control" placeholder="Enter your colleague's SSN accurately" required />
-                            </div>
-
-                            <button type="submit" class="btn btn-warning px-4 fw-bold">Submit Swap Request 🔄</button>
-                        </form>
+                    <!-- Request Swap -->
+                    <div class="tab-pane fade @panelActive("swap")" id="swap" role="tabpanel" aria-labelledby="swap-tab-btn">
+                        <div class="section-header">
+                            <i class="bi bi-arrow-left-right text-warning"></i>
+                            <h5>Request a Shift Swap</h5>
+                        </div>
+                        <div class="form-card">
+                            <form asp-action="RequestSwap" method="post">
+                                <input type="hidden" name="requestingSsn" value="@Model.EmployeeSsn" />
+                                <input type="hidden" name="scheduleId" value="" />
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">Colleague SSN</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                        <input type="text" name="recipientSsn" class="form-control" placeholder="Enter colleague's SSN" required />
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">Reason</label>
+                                    <textarea name="reason" class="form-control" rows="3" placeholder="Why do you need to swap?" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-warning fw-bold px-4">
+                                    <i class="bi bi-send-fill me-2"></i> Submit Request
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
-                    <!-- Request Vacation Tab -->
-                    <div class="tab-pane fade" id="vacation" role="tabpanel">
-                        <h5 class="mb-3 font-weight-bold text-primary">Apply for a New Vacation</h5>
-                        <form asp-action="ApplyVacation" method="post" class="text-left">
-                            <input type="hidden" name="EmployeeSsn" value="@Model.EmployeeSsn" />
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Start Date:</label>
-                                    <input type="date" name="StartDate" class="form-control" required />
+                    <!-- Request Vacation -->
+                    <div class="tab-pane fade @panelActive("vacation")" id="vacation" role="tabpanel" aria-labelledby="vacation-tab-btn">
+                        <div class="section-header">
+                            <i class="bi bi-umbrella-fill text-primary"></i>
+                            <h5>Apply for Vacation</h5>
+                        </div>
+                        <div class="form-card">
+                            <form asp-action="ApplyVacation" method="post">
+                                <input type="hidden" name="EmployeeSsn" value="@Model.EmployeeSsn" />
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Start Date</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                            <input type="date" name="StartDate" class="form-control" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">End Date</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
+                                            <input type="date" name="EndDate" class="form-control" required />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">End Date:</label>
-                                    <input type="date" name="EndDate" class="form-control" required />
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">Reason</label>
+                                    <textarea name="Reason" class="form-control" rows="3" placeholder="State your reason clearly..." required></textarea>
                                 </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Reason for Vacation:</label>
-                                <textarea name="Reason" class="form-control" rows="3" placeholder="Please state the clear reason for your vacation request..." required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary px-4 fw-bold">Submit Application</button>
-                        </form>
+                                <button type="submit" class="btn btn-primary fw-bold px-4">
+                                    <i class="bi bi-send-fill me-2"></i> Submit Application
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
-                    <!-- Requests Status Tab -->
-                    <div class="tab-pane fade" id="requests" role="tabpanel">
+                    <!-- Requests Status -->
+                    <div class="tab-pane fade @panelActive("requests")" id="requests" role="tabpanel" aria-labelledby="requests-tab-btn">
 
-                        <h5 class="mb-3 font-weight-bold text-primary">Your Vacation Requests</h5>
+                        <!-- Vacation Requests -->
+                        <div class="section-header">
+                            <i class="bi bi-umbrella text-primary"></i>
+                            <h5>Vacation Requests</h5>
+                        </div>
                         <div class="table-responsive mb-4">
-                            <table class="table table-bordered align-middle text-left">
-                                <thead class="table-light">
+                            <table class="table modern-table">
+                                <thead>
                                     <tr>
-                                        <th>Start Date</th>
-                                        <th>End Date</th>
+                                        <th>Start</th>
+                                        <th>End</th>
                                         <th>Reason</th>
                                         <th>Status</th>
                                     </tr>
@@ -168,18 +273,23 @@
                                 <tbody>
                                     @if (Model.VacationRequests == null || !Model.VacationRequests.Any())
                                     {
-                                        <tr><td colspan="4" class="text-center text-muted">No vacation requests found.</td></tr>
+                                        <tr>
+                                            <td colspan="4" class="empty-state">
+                                                <i class="bi bi-inbox"></i>
+                                                <p>No vacation requests</p>
+                                            </td>
+                                        </tr>
                                     }
                                     else
                                     {
                                         @foreach (var vac in Model.VacationRequests)
                                         {
                                             <tr>
-                                                <td>@vac.StartDate.ToString("dd-MM-yyyy")</td>
-                                                <td>@vac.EndDate.ToString("dd-MM-yyyy")</td>
+                                                <td>@vac.StartDate.ToString("dd MMM yyyy")</td>
+                                                <td>@vac.EndDate.ToString("dd MMM yyyy")</td>
                                                 <td>@vac.Reason</td>
                                                 <td>
-                                                    <span class="badge @(vac.Status.ToString() == "Approved" ? "bg-success" : vac.Status.ToString() == "Rejected" ? "bg-danger" : "bg-warning")">
+                                                    <span class="status-badge @(vac.Status.ToString() == "Approved" ? "status-approved" : vac.Status.ToString() == "Rejected" ? "status-rejected" : "status-pending")">
                                                         @vac.Status
                                                     </span>
                                                 </td>
@@ -190,31 +300,44 @@
                             </table>
                         </div>
 
-                        <h5 class="mb-3 font-weight-bold text-warning">Incoming Swap Requests</h5>
-                        <div class="table-responsive">
-                            <table class="table table-bordered align-middle text-left">
-                                <thead class="table-light">
+                        <!-- Incoming Swap -->
+                        <div class="section-header">
+                            <i class="bi bi-arrow-left-right text-warning"></i>
+                            <h5>Incoming Swap Requests</h5>
+                        </div>
+                        <div class="table-responsive mb-4">
+                            <table class="table modern-table">
+                                <thead>
                                     <tr>
-                                        <th>From (Colleague SSN)</th>
+                                        <th>From</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @if (Model.ReceivedSwapRequests == null || !Model.ReceivedSwapRequests.Any())
+                                    @if (Model.ReceivedSwapRequests == null || !Model.ReceivedSwapRequests.Any(s => s.Status == "Pending"))
                                     {
-                                        <tr><td colspan="2" class="text-center text-muted">No incoming swap requests.</td></tr>
+                                        <tr>
+                                            <td colspan="2" class="empty-state">
+                                                <i class="bi bi-inbox"></i>
+                                                <p>No incoming requests</p>
+                                            </td>
+                                        </tr>
                                     }
                                     else
                                     {
-                                        @foreach (var swap in Model.ReceivedSwapRequests)
+                                        @foreach (var swap in Model.ReceivedSwapRequests.Where(s => s.Status == "Pending"))
                                         {
                                             <tr>
-                                                <td>@swap.RequestingEmployeeId</td>
+                                                <td><span class="id-badge">@swap.RequestingEmployeeId</span></td>
                                                 <td>
                                                     <form asp-action="RespondToSwap" method="post" class="d-inline">
                                                         <input type="hidden" name="swapId" value="@swap.RequestId" />
-                                                        <button type="submit" name="status" value="Approved" class="btn btn-sm btn-success fw-bold me-1">Accept ✅</button>
-                                                        <button type="submit" name="status" value="Rejected" class="btn btn-sm btn-danger fw-bold">Reject ❌</button>
+                                                        <button type="submit" name="status" value="Approved" class="btn btn-sm btn-success me-1">
+                                                            <i class="bi bi-check-lg"></i> Accept
+                                                        </button>
+                                                        <button type="submit" name="status" value="Rejected" class="btn btn-sm btn-danger">
+                                                            <i class="bi bi-x-lg"></i> Reject
+                                                        </button>
                                                     </form>
                                                 </td>
                                             </tr>
@@ -224,44 +347,458 @@
                             </table>
                         </div>
 
-                    </div>
+                        <!-- Sent Swap -->
+                        <div class="section-header">
+                            <i class="bi bi-send text-primary"></i>
+                            <h5>Sent Swap Requests</h5>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table modern-table">
+                                <thead>
+                                    <tr>
+                                        <th>To</th>
+                                        <th>Reason</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.SentSwapRequests == null || !Model.SentSwapRequests.Any())
+                                    {
+                                        <tr>
+                                            <td colspan="3" class="empty-state">
+                                                <i class="bi bi-inbox"></i>
+                                                <p>No sent requests</p>
+                                            </td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var swap in Model.SentSwapRequests)
+                                        {
+                                            <tr>
+                                                <td>@swap.RecipientEmployeeId</td>
+                                                <td>@swap.Reason</td>
+                                                <td>
+                                                    <span class="status-badge @(swap.Status == "Approved" ? "status-approved" : swap.Status == "Rejected" ? "status-rejected" : swap.Status == "PendingManagerApproval" ? "status-manager" : "status-pending")">
+                                                        @(swap.Status == "PendingManagerApproval" ? "Pending Manager" : swap.Status)
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
 
+                    </div>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
 <style>
-    body {
-        background-color: #f4f6f9;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    .emp-wrapper {
+        padding: 2rem 1rem;
+        background: #f0f4f8;
+        min-height: 100vh;
     }
 
-    .card {
-        border-radius: 15px;
+    /* Utility colors Bootstrap doesn't ship by default */
+    .text-purple {
+        color: #8b5cf6 !important;
     }
 
-    .nav-tabs .nav-link {
-        color: #495057;
-        border: none;
-        border-bottom: 3px solid transparent;
+    .text-pink {
+        color: #ec4899 !important;
     }
 
-        .nav-tabs .nav-link.active {
-            color: #0d6efd;
-            border: none;
-            border-bottom: 3px solid #0d6efd;
-            background-color: transparent;
+    /* Profile Card */
+    .profile-card {
+        background: #fff;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .profile-cover {
+        height: 80px;
+        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+    }
+
+    .profile-avatar-wrap {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        margin-top: -40px;
+        margin-bottom: 10px;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        object-fit: cover;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+
+    .profile-avatar-placeholder {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+
+    .avatar-upload-btn {
+        position: absolute;
+        bottom: 0;
+        right: calc(50% - 50px);
+        width: 26px;
+        height: 26px;
+        background: #0d6efd;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.7rem;
+        cursor: pointer;
+        border: 2px solid white;
+        transition: transform .15s ease, background-color .15s ease;
+    }
+
+        .avatar-upload-btn:hover {
+            background: #0b5ed7;
+            transform: scale(1.08);
         }
 
-    .text-left {
-        text-align: left !important;
+    .profile-name-section {
+        text-align: center;
+        padding: 0 1rem 0.5rem;
     }
 
-    .table th {
+    .profile-name {
+        font-weight: 700;
+        margin-bottom: 2px;
+        color: #1a1a2e;
+    }
+
+    .profile-role {
+        font-size: 0.8rem;
+        color: #6c757d;
+        background: #f0f4f8;
+        padding: 2px 10px;
+        border-radius: 20px;
+    }
+
+    .profile-stats {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-top: 1px solid #f0f4f8;
+        border-bottom: 1px solid #f0f4f8;
+        margin: 0.5rem 0;
+    }
+
+    .stat-item {
+        text-align: center;
+        flex: 1;
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 1.4rem;
+        font-weight: 700;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        color: #6c757d;
+    }
+
+    .stat-divider {
+        width: 1px;
+        background: #e9ecef;
+    }
+
+    .profile-info {
+        padding: 1rem 1.2rem 1.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.4rem 0;
+        font-size: 0.875rem;
+        color: #495057;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+        .info-item span {
+            overflow-wrap: anywhere;
+        }
+
+        .info-item i {
+            width: 16px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+    /* Main Card */
+    .main-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    /* Custom Tabs */
+    .custom-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        background: #f8f9fa;
+        padding: 0.5rem;
+        gap: 0.3rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .tab-btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 0.6rem 0.5rem;
+        border: none;
+        background: transparent;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+    }
+
+        .tab-btn:hover {
+            background: #fff;
+            color: #0d6efd;
+        }
+
+        .tab-btn.active {
+            background: #fff;
+            color: #0d6efd;
+            box-shadow: 0 2px 8px rgba(13,110,253,0.15);
+        }
+
+        .tab-btn:focus-visible {
+            outline: 2px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+    /* Section Header */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+        .section-header h5 {
+            margin: 0;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+    /* Tab content animation */
+    .tab-pane.show.active {
+        animation: fadeSlideIn .25s ease;
+    }
+
+    @@keyframes fadeSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Modern Table */
+    .modern-table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+        .modern-table thead tr {
+            background: #f8f9fa;
+        }
+
+        .modern-table thead th {
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.8rem 1rem;
+            border: none;
+        }
+
+        .modern-table tbody tr {
+            transition: background 0.15s;
+        }
+
+            .modern-table tbody tr:hover {
+                background: #f8f9ff;
+            }
+
+        .modern-table tbody td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #f0f4f8;
+            vertical-align: middle;
+            font-size: 0.9rem;
+        }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+
+    .status-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-manager {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .date-badge {
+        font-weight: 600;
+        color: #0d6efd;
+    }
+
+    .id-badge {
         font-weight: 600;
         color: #495057;
+        background: #f0f4f8;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 2rem !important;
+        color: #adb5bd;
+    }
+
+        .empty-state i {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+    /* Form Card */
+    .form-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+        .form-card .form-control {
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+            .form-card .form-control:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+            }
+
+        .form-card .input-group-text {
+            background: #fff;
+            border-color: #e9ecef;
+            color: #6c757d;
+        }
+
+    @@media (max-width: 576px) {
+        .tab-btn {
+            font-size: 0.75rem;
+            min-width: 90px;
+        }
+
+            .tab-btn i {
+                display: none;
+            }
     }
 </style>
+
+<script>
+    // Manual tab controller — does not rely on data-bs-toggle/Bootstrap JS being
+    // present or loaded in time, so the tabs always switch reliably.
+    (function () {
+        function activateTab(targetId) {
+            document.querySelectorAll('#employeeTab .tab-btn').forEach(function (btn) {
+                var isTarget = btn.getAttribute('data-tab-target') === targetId;
+                btn.classList.toggle('active', isTarget);
+                btn.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+            });
+            document.querySelectorAll('#employeeTabContent .tab-pane').forEach(function (pane) {
+                var isTarget = pane.id === targetId;
+                pane.classList.toggle('active', isTarget);
+                pane.classList.toggle('show', isTarget);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('#employeeTab .tab-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var target = btn.getAttribute('data-tab-target');
+                    if (target) {
+                        activateTab(target);
+                        history.replaceState(null, '', '#' + target);
+                    }
+                });
+            });
+
+            var hash = window.location.hash ? window.location.hash.substring(1) : null;
+            if (hash && document.getElementById(hash)) {
+                activateTab(hash);
+            }
+        });
+    })();
+</script>

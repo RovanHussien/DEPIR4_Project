@@ -42,52 +42,72 @@ namespace DEPI.BLL.Service.Implementation
         {
             return await _scheduleRepo.GetScheduleByEmployeeSsnAsync(empSsn);
         }
-        
 
-        public async Task<bool> CreateSwapRequestAsync(int scheduleId, string requestingEmpSsn, string recipientEmpSsn)
+
+        public async Task<bool> CreateSwapRequestAsync(int scheduleId, string requestingEmpSsn, string recipientEmpSsn, string reason)
         {
+          
+            var requestingEmployee = await _employeeRepo.GetEmployeeById(requestingEmpSsn);
+            var recipientEmployee = await _employeeRepo.GetEmployeeById(recipientEmpSsn);
+
+            if (requestingEmployee == null || recipientEmployee == null)
+                throw new Exception("Employee not found!");
+
+            var requestingSchedule = await _scheduleRepo.GetScheduleByEmployeeSsnAsync(requestingEmpSsn);
+            var recipientSchedule = await _scheduleRepo.GetScheduleByEmployeeSsnAsync(recipientEmpSsn);
+
+            if (requestingSchedule.Any() && recipientSchedule.Any())
+            {
+                var requestingShiftIds = requestingSchedule.Select(s => s.ShiftId).ToList();
+                var recipientShiftIds = recipientSchedule.Select(s => s.ShiftId).ToList();
+
+                if (requestingShiftIds.Intersect(recipientShiftIds).Any())
+                    throw new Exception("You cannot request a swap with an employee on the same shift!");
+            }
             var swapRequest = new SwapRequest
             {
-                ScheduleId = scheduleId,
+                ScheduleId = scheduleId == 0 ? null : scheduleId,
                 RequestingEmployeeId = requestingEmpSsn,
-                RecipientEmployeeId = recipientEmpSsn
+                RecipientEmployeeId = recipientEmpSsn,
+                Reason = reason
             };
-
             return await _swapRepo.AddSwapRequestAsync(swapRequest);
         }
 
-        
+
         public async Task<bool> ApplyForVacationAsync(VacationRequest vacationRequest)
         {
             if (vacationRequest == null) return false;
-
-           
             if (vacationRequest.StartDate < DateTime.Now.Date)
-            {
                 throw new Exception("Cannot request a vacation with a past date!");
-            }
-
-            
             int requestedDays = (vacationRequest.EndDate - vacationRequest.StartDate).Days + 1;
             if (requestedDays <= 0)
-            {
                 throw new Exception("End date must be after the start date!");
-            }
-
-          
             var employee = await _employeeRepo.GetEmployeeById(vacationRequest.EmployeeSsn);
             if (employee == null)
-            {
                 throw new Exception("Employee not found!");
-            }
-            int currentBalance = employee.VacationBalance ?? 0; 
-            if (currentBalance < requestedDays)
-            {
-                throw new Exception($"Sorry, your vacation balance ({currentBalance} days) is insufficient for this request ({requestedDays} days).");
-            }
-
 
             
+            var hasPendingRequest = employee.VacationRequests
+                .Any(v => v.Status == VacationRequestStatus.Pending);
+            if (hasPendingRequest)
+                throw new Exception("You already have a pending vacation request. Please wait for it to be reviewed.");
+
+            int currentYear = DateTime.Now.Year;
+            if (employee.LastResetYear == null || employee.LastResetYear < currentYear)
+            {
+                employee.VacationRequestsCount = 5;
+                employee.LastResetYear = currentYear;
+            }
+            if (employee.VacationRequestsCount <= 0)
+                throw new Exception("You have reached the maximum number of vacation requests (5) for this year.");
+            int currentBalance = employee.VacationBalance ?? 0;
+            if (currentBalance < requestedDays)
+                throw new Exception($"Sorry, your vacation balance ({currentBalance} days) is insufficient for this request ({requestedDays} days).");
+
+            employee.VacationRequestsCount--;
+            employee.VacationBalance = currentBalance - requestedDays;
+            await _employeeRepo.UpdateVacationRequestsCountAsync(employee.EmployeeSsn, employee.VacationRequestsCount, employee.LastResetYear.Value);
             return await _vacationRepo.AddVacationRequestAsync(vacationRequest);
         }
         public async Task<bool> RespondToSwapRequestAsync(int swapId, string status)
@@ -96,6 +116,10 @@ namespace DEPI.BLL.Service.Implementation
             if (swapRequest == null) return false;
             swapRequest.Status = status;
             return await _swapRepo.UpdateSwapRequestAsync(swapRequest);
+        }
+        public async Task<bool> UpdateProfilePictureAsync(string ssn, string fileName)
+        {
+            return await _employeeRepo.UpdateProfilePictureAsync(ssn, fileName);
         }
     }
 }

@@ -22,7 +22,7 @@ namespace DEPI.DAL.Model
         public DateTime BirthDate { get; set; }
         public string Address { get; set; }
         public int PhoneNumber { get; set; }
-        public int? VacationBalance { get; set; }
+        public int? VacationBalance { get; set; } = 30;
         public string? DefaultRole { get; set; }
 
         // navigation properties for department
@@ -61,6 +61,9 @@ namespace DEPI.DAL.Model
         // navigation properties for ApplicationUser
         public ApplicationUser ApplicationUser { get; set; }
         public string? UserId { get; set; }
+        public string? ProfilePicture { get; set; }
+        public int VacationRequestsCount { get; set; } = 5;
+        public int? LastResetYear { get; set; }
 
     }
 }

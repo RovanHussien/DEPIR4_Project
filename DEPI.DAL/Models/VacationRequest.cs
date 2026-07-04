@@ -18,6 +18,6 @@ namespace DEPI.DAL.Model
         public Employee? Employee { get; set; }
         public string? EmployeeSsn { get; set; }
 
-        public List<Schedule> Schedules { get; set; }   
+        public List<Schedule>? Schedules { get; set; }   
     }
 }
