@@ -16,6 +16,7 @@ namespace DEPI.BLL.Service.Implementation
             _configuration = configuration;
         }
 
+
         public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
             try
@@ -57,5 +58,6 @@ namespace DEPI.BLL.Service.Implementation
                 Console.WriteLine($"✗ Failed to send email to {toEmail}: {ex.Message}");
             }
         }
+
     }
 }

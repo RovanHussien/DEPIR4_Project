@@ -15,10 +15,11 @@ namespace DEPI.BLL.Service.Interfaces
             Task<Employee> GetEmployeeProfileAsync(string empSsn);
 
             Task<IEnumerable<Schedule>> GetMyScheduleAsync(string empSsn);
-            Task<bool> CreateSwapRequestAsync(int scheduleId, string requestingEmpSsn, string recipientEmpSsn);
-           Task<bool> ApplyForVacationAsync(VacationRequest vacationRequest);
+        Task<bool> CreateSwapRequestAsync(int scheduleId, string requestingEmpSsn, string recipientEmpSsn, string reason);
+        Task<bool> ApplyForVacationAsync(VacationRequest vacationRequest);
            Task<Employee> GetEmployeeByUserIdAsync(string userId);
            Task<bool> RespondToSwapRequestAsync(int swapId, string Status);
+          Task<bool> UpdateProfilePictureAsync(string ssn, string fileName);
 
 
     }

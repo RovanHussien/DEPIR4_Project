@@ -26,9 +26,9 @@ namespace DEPI.DAL.Repo.Implementation
                 await _context.SaveChangesAsync();
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return false;
+                throw;
             }
         }
         public async Task<SwapRequest> GetSwapRequestByIdAsync(int swapId)

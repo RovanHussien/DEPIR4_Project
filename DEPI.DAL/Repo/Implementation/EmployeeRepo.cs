@@ -55,9 +55,19 @@ namespace DEPI.DAL.Repo.Implementation
         public async Task<Employee> GetEmployeeById(string id)
         {
             var employee = await _context.Employees
-                .Include(e => e.VacationRequests)
+                 .Include(e => e.VacationRequests)
                 .Include(e => e.ReceivedSwapRequests)
+                 .Include(e => e.SentSwapRequests)
+                .Include(e => e.Schedules)
+                    .ThenInclude(s => s.Shift)
+                .Include(e => e.Schedules)
+                    .ThenInclude(s => s.ProductionLine)
+                .Include(e => e.Schedules)
+                    .ThenInclude(s => s.Mission)
                 .FirstOrDefaultAsync(e => e.EmployeeSsn == id);
+                 
+
+
 
             if (employee == null)
             {
@@ -92,6 +102,24 @@ namespace DEPI.DAL.Repo.Implementation
             _context.Employees.Update(existingEmployee);
             await _context.SaveChangesAsync();
             return IdentityResult.Success;
+        }
+        public async Task<bool> UpdateProfilePictureAsync(string ssn, string fileName)
+        {
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.EmployeeSsn == ssn);
+            if (employee == null) return false;
+            employee.ProfilePicture = fileName;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        public async Task UpdateVacationRequestsCountAsync(string ssn, int count, int year)
+        {
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.EmployeeSsn == ssn);
+            if (employee != null)
+            {
+                employee.VacationRequestsCount = count;
+                employee.LastResetYear = year;
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

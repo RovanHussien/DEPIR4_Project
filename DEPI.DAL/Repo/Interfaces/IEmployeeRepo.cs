@@ -19,5 +19,7 @@ namespace DEPI.DAL.Repo.Interfaces
         public Task<IdentityResult> DeleteEmployeeAsync(string id);
         Task<Employee> GetEmployeeByUserIdAsync(string userId);
         public Task<Employee> GetEmployeeById(string id);
+        Task<bool> UpdateProfilePictureAsync(string ssn, string fileName);
+        Task UpdateVacationRequestsCountAsync(string ssn, int count, int year);
     }
 }
