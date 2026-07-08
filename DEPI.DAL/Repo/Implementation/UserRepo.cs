@@ -30,7 +30,7 @@ namespace DEPI.DAL.Repo.Implementation
         public async Task<ApplicationUser> GetByEmailAsync(string Email)
         {
             var user = await _context.Users.Include(e => e.Employee).FirstOrDefaultAsync(u => u.Email == Email);
-            return user ?? throw new Exception("User not found");
+            return user;
         }
 
         public async Task<List<ApplicationUser>> GetByUsersByStatus(EmployeeStatus status)
@@ -57,7 +57,7 @@ namespace DEPI.DAL.Repo.Implementation
         public async Task<ApplicationUser> GetUserByIdAsync(string userId)
         {
             var user = await _context.Users.Include(e => e.Employee).FirstOrDefaultAsync(u => u.Id == userId);
-            return user ?? throw new Exception("User not found");
+            return user;
         }
         public async Task<bool> CheckPasswordAsync(ApplicationUser user, string password)
         {
