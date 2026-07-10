@@ -129,7 +129,7 @@ namespace DEPI.PLL.Controllers
 
             var employee = await _employeeService.GetEmployeeByUserIdAsync(userId);
 
-            string newStatus = status == "Approved" ? "PendingManagerApproval" : "Rejected";
+            string newStatus = status == "Approved" ? "RecipientApproved" : "RecipientRejected";
 
             var result = await _employeeService.RespondToSwapRequestAsync(swapId, newStatus);
 
