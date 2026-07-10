@@ -45,7 +45,7 @@ namespace DEPI.DAL.Repo.Implementation
             return employees;
         }
 
-        
+
 
         public async Task<Employee> GetEmployeeByUserIdAsync(string userId)
         {
@@ -58,14 +58,20 @@ namespace DEPI.DAL.Repo.Implementation
                  .Include(e => e.VacationRequests)
                 .Include(e => e.ReceivedSwapRequests)
                  .Include(e => e.SentSwapRequests)
+                .Include(e => e.Shift)
+                .Include(e => e.ProductionLine)
+                    .ThenInclude(p => p.Department)
+                        .ThenInclude(d => d.Manager)
                 .Include(e => e.Schedules)
                     .ThenInclude(s => s.Shift)
                 .Include(e => e.Schedules)
                     .ThenInclude(s => s.ProductionLine)
+                        .ThenInclude(p => p.Department)
+                            .ThenInclude(d => d.Manager)
                 .Include(e => e.Schedules)
                     .ThenInclude(s => s.Mission)
                 .FirstOrDefaultAsync(e => e.EmployeeSsn == id);
-                 
+
 
 
 

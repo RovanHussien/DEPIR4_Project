@@ -4,6 +4,7 @@ using DEPI.DAL.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DEPI.DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260709234803_ne")]
+    partial class ne
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,33 +33,20 @@ namespace DEPI.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttendanceId"));
 
-                    b.Property<DateTime?>("CheckInTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("CheckOutTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("EmployeeSsn")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ShiftId")
+                    b.Property<int?>("ScheduleId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("TimeIn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("TimeOut")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("AttendanceId");
 
-                    b.HasIndex("EmployeeSsn");
-
-                    b.HasIndex("ShiftId");
+                    b.HasIndex("ScheduleId")
+                        .IsUnique()
+                        .HasFilter("[ScheduleId] IS NOT NULL");
 
                     b.ToTable("Attendances");
                 });
@@ -103,9 +93,6 @@ namespace DEPI.DAL.Migrations
                     b.Property<string>("DefaultRole")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("FingerprintId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -150,10 +137,6 @@ namespace DEPI.DAL.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("EmployeeSsn");
-
-                    b.HasIndex("FingerprintId")
-                        .IsUnique()
-                        .HasFilter("[FingerprintId] IS NOT NULL");
 
                     b.HasIndex("ManagerSsn");
 
@@ -380,8 +363,6 @@ namespace DEPI.DAL.Migrations
 
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(max)");
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
 
                     b.HasKey("RequestId");
 
@@ -637,20 +618,11 @@ namespace DEPI.DAL.Migrations
 
             modelBuilder.Entity("DEPI.DAL.Model.Attendance", b =>
                 {
-                    b.HasOne("DEPI.DAL.Model.Employee", "Employee")
-                        .WithMany("Attendances")
-                        .HasForeignKey("EmployeeSsn")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.HasOne("DEPI.DAL.Model.Schedule", "Schedule")
+                        .WithOne("Attendance")
+                        .HasForeignKey("DEPI.DAL.Model.Attendance", "ScheduleId");
 
-                    b.HasOne("DEPI.DAL.Model.Shift", "Shift")
-                        .WithMany()
-                        .HasForeignKey("ShiftId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("Shift");
+                    b.Navigation("Schedule");
                 });
 
             modelBuilder.Entity("DEPI.DAL.Model.Department", b =>
@@ -879,8 +851,6 @@ namespace DEPI.DAL.Migrations
 
             modelBuilder.Entity("DEPI.DAL.Model.Employee", b =>
                 {
-                    b.Navigation("Attendances");
-
                     b.Navigation("AuthorizedMissions");
 
                     b.Navigation("EmployeeDepartments");
@@ -922,6 +892,9 @@ namespace DEPI.DAL.Migrations
 
             modelBuilder.Entity("DEPI.DAL.Model.Schedule", b =>
                 {
+                    b.Navigation("Attendance")
+                        .IsRequired();
+
                     b.Navigation("SwapRequest")
                         .IsRequired();
                 });

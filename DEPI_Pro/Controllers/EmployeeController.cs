@@ -43,6 +43,7 @@ namespace DEPI.PLL.Controllers
                 return NotFound("Sorry, employee profile not found.");
 
             ViewData["Schedules"] = await _employeeService.GetMyScheduleAsync(ssn);
+            ViewData["TodaySchedule"] = await _employeeService.GetTodayScheduleAsync(ssn);
             ViewData["ActiveTab"] = tab; // ✅
             return View(employeeProfile);
         }
@@ -128,7 +129,7 @@ namespace DEPI.PLL.Controllers
 
             var employee = await _employeeService.GetEmployeeByUserIdAsync(userId);
 
-            string newStatus = status == "Approved" ? "PendingManagerApproval" : "Rejected";
+            string newStatus = status == "Approved" ? "RecipientApproved" : "RecipientRejected";
 
             var result = await _employeeService.RespondToSwapRequestAsync(swapId, newStatus);
 

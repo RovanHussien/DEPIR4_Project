@@ -16,7 +16,7 @@
             <div class="container">
                 <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index">
                     <i class="bi bi-capsule-pill me-2 text-primary" style="font-size: 1.5rem;"></i>
-                    <span class="fw-bold tracking-tight">Pharma<span class="text-secondary">Pro</span></span>
+                    <span class="fw-bold tracking-tight"> Staff<span class="text-secondary">Flow</span></span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" 
                         aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,31 +24,32 @@
                 </button>
                 <div id="navbarContent" class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            @if (User.IsInRole("Employee"))
-                            {
-                                <a class="nav-link" asp-area="" asp-controller="Employee" asp-action="Profile">
-                                    <i class="bi bi-house-door me-1"></i> Profile
-                                </a>
-							}
-                            
-                         </li>
-                        <li class="nav-item">
-                            @if (User.IsInRole("Manager"))
-                            {
-                                <a class="nav-link" asp-controller="Manager" asp-action="Index">
-                                    <i class="bi bi-kanban me-1"></i> Manager Panel 
-                                </a>
-                            }
-                        </li> 
-                        <li class="nav-item">
-                            @if (User.IsInRole("Manager"))
-                            {
-                                <a class="nav-link" asp-controller="Manager" asp-action="Profile">
-                                    <i class="bi bi-person-circle me-1"></i> My Profile
-                                    </a>
-                            }
-                            </li>
+    <li class="nav-item">
+        @if (User.IsInRole("Employee"))
+        {
+            <a class="nav-link" asp-area="" asp-controller="Employee" asp-action="Profile">
+                <i class="bi bi-house-door me-1"></i> Profile
+            </a>
+        }
+    </li>
+
+    <li class="nav-item">
+        @if (User.IsInRole("Manager"))
+        {
+            <a class="nav-link" asp-controller="Manager" asp-action="Index">
+                <i class="bi bi-kanban me-1"></i> Manager Panel
+            </a>
+        }
+    </li>
+
+    <li class="nav-item">
+        @if (User.IsInRole("Manager"))
+        {
+            <a class="nav-link" asp-controller="Manager" asp-action="Profile">
+                <i class="bi bi-person-circle me-1"></i> My Profile
+            </a>
+        }
+        </li>
                     </ul>
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
@@ -102,7 +103,7 @@
     <footer class="footer mt-auto py-3">
         <div class="container text-center text-md-start d-md-flex justify-content-between align-items-center">
             <span class="mb-2 mb-md-0">
-                &copy; 2026 - <strong class="text-primary">PharmaPro</strong>. All rights reserved.
+                &copy; 2026 - <strong class="text-primary">StaffFlow</strong>. All rights reserved.
             </span>
             <div class="d-flex gap-3 justify-content-center">
                 <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none text-muted">
@@ -118,4 +119,3 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
-

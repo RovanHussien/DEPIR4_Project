@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace DEPI.BLL.Service.Implementation
 {
-    
+
     public class EmployeeService : IEmployeeService
     {
         private readonly IEmployeeRepo _employeeRepo;
@@ -43,10 +43,15 @@ namespace DEPI.BLL.Service.Implementation
             return await _scheduleRepo.GetScheduleByEmployeeSsnAsync(empSsn);
         }
 
+        public async Task<Schedule?> GetTodayScheduleAsync(string empSsn)
+        {
+            return await _scheduleRepo.GetTodayScheduleByEmployeeSsnAsync(empSsn);
+        }
+
 
         public async Task<bool> CreateSwapRequestAsync(int scheduleId, string requestingEmpSsn, string recipientEmpSsn, string reason)
         {
-          
+
             var requestingEmployee = await _employeeRepo.GetEmployeeById(requestingEmpSsn);
             var recipientEmployee = await _employeeRepo.GetEmployeeById(recipientEmpSsn);
 
@@ -87,7 +92,7 @@ namespace DEPI.BLL.Service.Implementation
             if (employee == null)
                 throw new Exception("Employee not found!");
 
-            
+
             var hasPendingRequest = employee.VacationRequests
                 .Any(v => v.Status == VacationRequestStatus.Pending);
             if (hasPendingRequest)
@@ -114,7 +119,11 @@ namespace DEPI.BLL.Service.Implementation
         {
             var swapRequest = await _swapRepo.GetSwapRequestByIdAsync(swapId);
             if (swapRequest == null) return false;
-            swapRequest.Status = status;
+
+            if (!Enum.TryParse<SwapRequestStatus>(status, out var parsedStatus))
+                throw new Exception($"Invalid status value: {status}");
+
+            swapRequest.Status = parsedStatus;
             return await _swapRepo.UpdateSwapRequestAsync(swapRequest);
         }
         public async Task<bool> UpdateProfilePictureAsync(string ssn, string fileName)
@@ -123,6 +132,3 @@ namespace DEPI.BLL.Service.Implementation
         }
     }
 }
-
-
-

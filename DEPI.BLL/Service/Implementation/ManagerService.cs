@@ -26,9 +26,15 @@ namespace DEPI.BLL.Service.Implementation
 
         private List<string> GetEmployeeSsnsInDepartment(int departmentId)
         {
-            return _context.EmployeeDepartments
-                .Where(ed => ed.DepartmentID == departmentId)
-                .Select(ed => ed.EmployeeSsn)
+            var productionLineIds = _context.ProductionLines
+                .Where(p => p.DepartmentId == departmentId)
+                .Select(p => p.ProductionLineId)
+                .ToList();
+
+            return _context.Employees
+                .Where(e => e.ProductionLineId != null
+                       && productionLineIds.Contains(e.ProductionLineId.Value))
+                .Select(e => e.EmployeeSsn)
                 .ToList();
         }
 
@@ -135,15 +141,17 @@ namespace DEPI.BLL.Service.Implementation
                 .Include(s => s.RecipientEmployee)
                 .Include(s => s.Schedule).ThenInclude(sc => sc.Shift)
                 .Where(s => ssns.Contains(s.RequestingEmployeeId))
+                .ToList()
                 .Select(s => new ManagerShiftChangeDto
                 {
                     RequestId = s.RequestId,
-                    RequestingEmployeeName = s.RequestEmployee.FirstName + " " + s.RequestEmployee.LastName,
+                    RequestingEmployeeName = s.RequestEmployee != null
+                        ? s.RequestEmployee.FirstName + " " + s.RequestEmployee.LastName : "N/A",
                     RecipientEmployeeName = s.RecipientEmployee != null
-                        ? s.RecipientEmployee.FirstName + " " + s.RecipientEmployee.LastName
-                        : null,
-                    ShiftName = s.Schedule != null && s.Schedule.Shift != null ? s.Schedule.Shift.Name : null,
-                    ScheduleDate = s.Schedule != null ? s.Schedule.ScheduleDate : (DateTime?)null
+                        ? s.RecipientEmployee.FirstName + " " + s.RecipientEmployee.LastName : null,
+                    ShiftName = s.Schedule?.Shift?.Name,
+                    ScheduleDate = s.Schedule?.ScheduleDate,
+                    Status = s.Status.ToString()
                 })
                 .ToList();
         }
@@ -164,7 +172,10 @@ namespace DEPI.BLL.Service.Implementation
                     Destination = m.Destination,
                     StartDate = m.StartDate,
                     EndDate = m.EndDate,
-                    Status = m.Status.ToString()
+                    Status =
+                    DateTime.Today < m.StartDate.Date ? "Scheduled" :
+                    DateTime.Today > m.EndDate.Date ? "Completed" :
+                    "Active"
                 })
                 .ToList();
         }
@@ -182,6 +193,13 @@ namespace DEPI.BLL.Service.Implementation
             if (dto.EndDate < dto.StartDate)
                 return (false, "End date cannot be before the start date.");
 
+            var employee = _context.Employees
+                .Include(e => e.Shift)
+                .FirstOrDefault(e => e.EmployeeSsn == dto.GoesOnEmployeeSsn);
+
+            if (employee == null)
+                return (false, "Employee not found.");
+
             var mission = new Mission
             {
                 GoesOnEmployeeSsn = dto.GoesOnEmployeeSsn,
@@ -190,10 +208,28 @@ namespace DEPI.BLL.Service.Implementation
                 Destination = dto.Destination,
                 StartDate = dto.StartDate,
                 EndDate = dto.EndDate,
-                Status = MissionStatus.Pending
+                Status = MissionStatus.Active
             };
 
             _context.Missions.Add(mission);
+            _context.SaveChanges();
+
+            var schedules = new List<Schedule>();
+            var currentDate = dto.StartDate.Date;
+            while (currentDate <= dto.EndDate.Date)
+            {
+                schedules.Add(new Schedule
+                {
+                    ScheduleName = $"Mission - {dto.Purpose} ({currentDate:dd/MM/yyyy})",
+                    ScheduleDate = currentDate,
+                    EmployeeSsn = dto.GoesOnEmployeeSsn,
+                    ShiftId = employee.ShiftId,
+                    MissionId = mission.MissionId,
+                });
+                currentDate = currentDate.AddDays(1);
+            }
+
+            _context.Schedules.AddRange(schedules);
             _context.SaveChanges();
             return (true, null);
         }
@@ -201,7 +237,49 @@ namespace DEPI.BLL.Service.Implementation
         public List<ManagerAttendanceDto> GetDepartmentAttendance(int departmentId, DateTime? date)
         {
             var ssns = GetEmployeeSsnsInDepartment(departmentId);
+            var today = DateTime.Today;
 
+            var todaySchedules = _context.Schedules
+                .Include(s => s.Shift)
+                .Where(s => ssns.Contains(s.EmployeeSsn)
+                && s.ScheduleDate.Date == today
+                && s.MissionId != null)
+            .ToList();
+
+            foreach (var schedule in todaySchedules)
+            {
+                bool exists = _context.Attendances
+                    .Any(a => a.ScheduleId == schedule.ScheduleId);
+
+                if (!exists)
+                {
+                    DateTime timeIn;
+                    DateTime timeOut;
+
+                    if (schedule.Shift != null)
+                    {
+                        timeIn = schedule.ScheduleDate.Date + schedule.Shift.StartTime.TimeOfDay;
+                        timeOut = schedule.ScheduleDate.Date + schedule.Shift.EndTime.TimeOfDay;
+
+                        if (timeOut <= timeIn)
+                            timeOut = timeOut.AddDays(1);
+                    }
+                    else
+                    {
+                        timeIn = schedule.ScheduleDate.Date.AddHours(8);
+                        timeOut = schedule.ScheduleDate.Date.AddHours(16);
+                    }
+
+                    _context.Attendances.Add(new Attendance
+                    {
+                        ScheduleId = schedule.ScheduleId,
+                        TimeIn = timeIn,
+                        TimeOut = timeOut
+                    });
+                }
+            }
+
+            _context.SaveChanges();
             var query = _context.Attendances
                 .Include(a => a.Employee)
                 .Include(a => a.Shift)
@@ -252,11 +330,16 @@ namespace DEPI.BLL.Service.Implementation
                 PendingLeavesCount = _context.VacationRequests.Count(v =>
                     ssns.Contains(v.EmployeeSsn) && v.Status == VacationRequestStatus.Pending),
                 ShiftChangeRequestsCount = _context.SwapRequests.Count(s =>
-                    ssns.Contains(s.RequestingEmployeeId)),
+    ssns.Contains(s.RequestingEmployeeId) &&
+    s.Status == SwapRequestStatus.RecipientApproved),
                 ActiveMissionsCount = _context.Missions.Count(m =>
                     ssns.Contains(m.GoesOnEmployeeSsn) &&
                     m.Status != MissionStatus.Completed && m.Status != MissionStatus.Cancelled),
-                ProductionLinesCount = _context.ProductionLines.Count(p => p.DepartmentId == departmentId)
+                ProductionLinesCount = _context.ProductionLines.Count(p => p.DepartmentId == departmentId),
+                TodaySchedulesCount = _context.Schedules.Count(s =>
+                    ssns.Contains(s.EmployeeSsn) &&
+                    s.ScheduleDate.Date == DateTime.Today.Date &&
+                    s.ShiftId != null)
             };
         }
         public ManagerProfileDto GetManagerProfile(string applicationUserId)
@@ -304,6 +387,228 @@ namespace DEPI.BLL.Service.Implementation
 
             _context.SaveChanges();
             return (true, null);
+        }
+        public List<ManagerShiftDto> GetAvailableShifts()
+        {
+            return _context.Shifts
+                .Select(s => new ManagerShiftDto
+                {
+                    ShiftId = s.ShiftId,
+                    Name = s.Name,
+                    StartTime = s.StartTime.TimeOfDay,
+                    EndTime = s.EndTime.TimeOfDay
+                })
+                .ToList();
+        }
+
+        public List<EmployeeScheduleDto> GetDepartmentSchedules(int departmentId, DateTime? date)
+        {
+            var ssns = GetEmployeeSsnsInDepartment(departmentId);
+
+            var query = _context.Schedules
+                .Include(s => s.Employee)
+                .Include(s => s.Shift)
+                .Where(s => ssns.Contains(s.EmployeeSsn) && s.ShiftId != null);
+
+            if (date.HasValue)
+                query = query.Where(s => s.ScheduleDate.Date == date.Value.Date);
+
+            return query
+                .OrderBy(s => s.ScheduleDate)
+                .ThenBy(s => s.Shift.StartTime)
+                .Select(s => new EmployeeScheduleDto
+                {
+                    ScheduleId = s.ScheduleId,
+                    EmployeeName = s.Employee.FirstName + " " + s.Employee.LastName,
+                    EmployeeSsn = s.EmployeeSsn,
+                    ScheduleDate = s.ScheduleDate,
+                    ShiftName = s.Shift.Name,
+                    ShiftStart = s.Shift.StartTime.TimeOfDay,
+                    ShiftEnd = s.Shift.EndTime.TimeOfDay
+                })
+                .ToList();
+        }
+
+        public (bool Success, string ErrorMessage) AssignShiftToEmployee(AssignShiftDto dto, int departmentId)
+        {
+            var ssns = GetEmployeeSsnsInDepartment(departmentId);
+            if (!ssns.Contains(dto.EmployeeSsn))
+                return (false, "Employee does not belong to your department.");
+
+            var newShift = _context.Shifts.Find(dto.ShiftId);
+            if (newShift == null)
+                return (false, "Shift not found.");
+
+            if (dto.EndDate.Date < dto.StartDate.Date)
+                return (false, "End date cannot be before start date.");
+
+            var newStart = newShift.StartTime.TimeOfDay;
+            var newEnd = newShift.EndTime.TimeOfDay;
+
+            var currentDate = dto.StartDate.Date;
+            while (currentDate <= dto.EndDate.Date)
+            {
+                var existingSchedules = _context.Schedules
+                    .Include(s => s.Shift)
+                    .Where(s => s.EmployeeSsn == dto.EmployeeSsn
+                             && s.ScheduleDate.Date == currentDate
+                             && s.ShiftId != null)
+                    .ToList();
+
+                foreach (var existing in existingSchedules)
+                {
+                    var existStart = existing.Shift.StartTime.TimeOfDay;
+                    var existEnd = existing.Shift.EndTime.TimeOfDay;
+
+                    if (newStart < existEnd && newEnd > existStart)
+                        return (false, $"Conflict on {currentDate:dd/MM/yyyy}: Employee already has " +
+                                      $"'{existing.Shift.Name}' ({existStart:hh\\:mm} - {existEnd:hh\\:mm}).");
+                }
+                currentDate = currentDate.AddDays(1);
+            }
+
+            currentDate = dto.StartDate.Date;
+            int count = 0;
+            while (currentDate <= dto.EndDate.Date)
+            {
+                _context.Schedules.Add(new Schedule
+                {
+                    ScheduleName = $"{currentDate:dd/MM/yyyy} - {newShift.Name}",
+                    ScheduleDate = currentDate,
+                    EmployeeSsn = dto.EmployeeSsn,
+                    ShiftId = dto.ShiftId
+                });
+                currentDate = currentDate.AddDays(1);
+                count++;
+            }
+
+            _context.SaveChanges();
+            return (true, $"Shift assigned for {count} day(s) successfully.");
+        }
+        public bool RemoveSchedule(int scheduleId, int departmentId)
+        {
+            var ssns = GetEmployeeSsnsInDepartment(departmentId);
+            var schedule = _context.Schedules.Find(scheduleId);
+
+            if (schedule == null || !ssns.Contains(schedule.EmployeeSsn))
+                return false;
+
+            _context.Schedules.Remove(schedule);
+            _context.SaveChanges();
+            return true;
+        }
+
+        public (bool Success, string ErrorMessage) ExecuteSwap(int requestId, int departmentId)
+        {
+            var ssns = GetEmployeeSsnsInDepartment(departmentId);
+            var request = _context.SwapRequests
+                .Include(r => r.Schedule)
+                .FirstOrDefault(r => r.RequestId == requestId);
+
+            if (request == null || !ssns.Contains(request.RequestingEmployeeId))
+                return (false, "Swap request not found.");
+
+            if (request.Status == SwapRequestStatus.PendingRecipient)
+                return (false, "Waiting for recipient response.");
+            if (request.Status == SwapRequestStatus.RecipientRejected)
+                return (false, "The recipient has already rejected this request.");
+            if (request.Status == SwapRequestStatus.FinalApproved)
+                return (false, "This swap has already been executed.");
+            if (request.Status == SwapRequestStatus.FinalRejected)
+                return (false, "This request has already been rejected.");
+
+            var requestingSchedule = request.Schedule;
+            if (requestingSchedule == null)
+                return (false, "No schedule found for this request.");
+            if (!ssns.Contains(request.RecipientEmployeeId))
+                return (false, "Recipient is not in your department.");
+
+            var recipientSchedule = _context.Schedules
+                .FirstOrDefault(s => s.EmployeeSsn == request.RecipientEmployeeId
+                                  && s.ScheduleDate.Date == requestingSchedule.ScheduleDate.Date
+                                  && s.ShiftId != null);
+
+            if (recipientSchedule == null)
+                return (false, "Recipient has no shift scheduled on that date to swap with.");
+
+            var tempShiftId = requestingSchedule.ShiftId;
+            requestingSchedule.ShiftId = recipientSchedule.ShiftId;
+            recipientSchedule.ShiftId = tempShiftId;
+
+            request.Status = SwapRequestStatus.FinalApproved;
+            _context.SaveChanges();
+            return (true, "Shift swap executed successfully.");
+        }
+
+        public (bool Success, string ErrorMessage) RejectSwap(int requestId, int departmentId)
+        {
+            var ssns = GetEmployeeSsnsInDepartment(departmentId);
+            var request = _context.SwapRequests.Find(requestId);
+
+            if (request == null || !ssns.Contains(request.RequestingEmployeeId))
+                return (false, "Swap request not found.");
+
+            if (request.Status == SwapRequestStatus.PendingRecipient)
+                return (false, "Waiting for recipient response.");
+            if (request.Status == SwapRequestStatus.RecipientRejected)
+                return (false, "The recipient has already rejected this request.");
+            if (request.Status == SwapRequestStatus.FinalApproved)
+                return (false, "This swap has already been executed.");
+            if (request.Status == SwapRequestStatus.FinalRejected)
+                return (false, "This request has already been rejected.");
+
+            request.Status = SwapRequestStatus.FinalRejected;
+            _context.SaveChanges();
+            return (true, null);
+        }
+        public List<EmployeeScheduleRangeDto> GetDepartmentScheduleRanges(int departmentId, DateTime? date)
+        {
+            var flatSchedules = GetDepartmentSchedules(departmentId, date);
+
+            var result = new List<EmployeeScheduleRangeDto>();
+
+            var groups = flatSchedules
+                .GroupBy(s => new { s.EmployeeSsn, s.ShiftName, s.ShiftStart, s.ShiftEnd })
+                .OrderBy(g => g.Key.EmployeeSsn);
+
+            foreach (var group in groups)
+            {
+                var ordered = group.OrderBy(s => s.ScheduleDate).ToList();
+
+                List<EmployeeScheduleDto> currentRange = new List<EmployeeScheduleDto>();
+
+                foreach (var item in ordered)
+                {
+                    if (currentRange.Any() &&
+                        item.ScheduleDate.Date != currentRange.Last().ScheduleDate.Date.AddDays(1))
+                    {
+                        result.Add(BuildRangeDto(currentRange));
+                        currentRange = new List<EmployeeScheduleDto>();
+                    }
+                    currentRange.Add(item);
+                }
+
+                if (currentRange.Any())
+                    result.Add(BuildRangeDto(currentRange));
+            }
+
+            return result.OrderBy(r => r.StartDate).ToList();
+        }
+
+        private EmployeeScheduleRangeDto BuildRangeDto(List<EmployeeScheduleDto> range)
+        {
+            var first = range.First();
+            return new EmployeeScheduleRangeDto
+            {
+                EmployeeName = first.EmployeeName,
+                EmployeeSsn = first.EmployeeSsn,
+                ShiftName = first.ShiftName,
+                ShiftStart = first.ShiftStart,
+                ShiftEnd = first.ShiftEnd,
+                StartDate = range.First().ScheduleDate,
+                EndDate = range.Last().ScheduleDate,
+                ScheduleIds = range.Select(r => r.ScheduleId).ToList()
+            };
         }
     }
 }
