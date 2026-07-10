@@ -1,6 +1,7 @@
 ﻿@model DEPI.BLL.DTO.ManagerProfileEditDto
 @{
     ViewData["Title"] = "Edit Profile";
+    string profileImageUrl = ViewBag.ProfileImageUrl;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -22,7 +23,31 @@
 
 <div class="card shadow-sm border-0" style="max-width: 600px;">
     <div class="card-body p-4">
-        <form asp-action="EditProfile" method="post">
+        <form asp-action="EditProfile" method="post" enctype="multipart/form-data">
+
+            <div class="mb-4 d-flex align-items-center gap-3">
+                <div class="rounded-circle border overflow-hidden d-flex align-items-center justify-content-center bg-light"
+                     style="width: 80px; height: 80px; flex-shrink: 0;">
+                    @if (profileImageUrl != null)
+                    {
+                        <img src="@profileImageUrl" id="previewImg"
+                             style="width: 80px; height: 80px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <i class="bi bi-person-fill text-primary" style="font-size: 2.2rem;" id="defaultIcon"></i>
+                        <img id="previewImg" style="display:none; width: 80px; height: 80px; object-fit: cover;" />
+                    }
+                </div>
+                <div>
+                    <label class="form-label mb-1 d-block">Profile Picture</label>
+                    <input type="file" name="ProfileImage" class="form-control form-control-sm"
+                           accept="image/*" style="max-width: 220px;"
+                           onchange="previewImage(this)" />
+                    <small class="text-muted">JPG, PNG, GIF (optional)</small>
+                </div>
+            </div>
+
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">First Name</label>
@@ -60,3 +85,21 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var preview = document.getElementById('previewImg');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    var icon = document.getElementById('defaultIcon');
+                    if (icon) icon.style.display = 'none';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+}

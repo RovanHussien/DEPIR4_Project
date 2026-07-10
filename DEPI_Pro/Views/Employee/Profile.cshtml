@@ -314,7 +314,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @if (Model.ReceivedSwapRequests == null || !Model.ReceivedSwapRequests.Any(s => s.Status == "Pending"))
+                                    @if (Model.ReceivedSwapRequests == null || !Model.ReceivedSwapRequests.Any(s => s.Status == DEPI.DAL.Enums.SwapRequestStatus.PendingRecipient))
                                     {
                                         <tr>
                                             <td colspan="2" class="empty-state">
@@ -325,7 +325,7 @@
                                     }
                                     else
                                     {
-                                        @foreach (var swap in Model.ReceivedSwapRequests.Where(s => s.Status == "Pending"))
+                                        @foreach (var swap in Model.ReceivedSwapRequests.Where(s => s.Status == DEPI.DAL.Enums.SwapRequestStatus.PendingRecipient))
                                         {
                                             <tr>
                                                 <td><span class="id-badge">@swap.RequestingEmployeeId</span></td>
@@ -346,8 +346,6 @@
                                 </tbody>
                             </table>
                         </div>
-
-                        <!-- Sent Swap -->
                         <div class="section-header">
                             <i class="bi bi-send text-primary"></i>
                             <h5>Sent Swap Requests</h5>
@@ -375,13 +373,29 @@
                                     {
                                         @foreach (var swap in Model.SentSwapRequests)
                                         {
+                                            string badgeClass = swap.Status switch
+                                            {
+                                                DEPI.DAL.Enums.SwapRequestStatus.FinalApproved => "status-approved",
+                                                DEPI.DAL.Enums.SwapRequestStatus.RecipientRejected => "status-rejected",
+                                                DEPI.DAL.Enums.SwapRequestStatus.FinalRejected => "status-rejected",
+                                                DEPI.DAL.Enums.SwapRequestStatus.RecipientApproved => "status-manager",
+                                                _ => "status-pending"
+                                            };
+                                            string badgeText = swap.Status switch
+                                            {
+                                                DEPI.DAL.Enums.SwapRequestStatus.PendingRecipient => "Pending Colleague",
+                                                DEPI.DAL.Enums.SwapRequestStatus.RecipientApproved => "Pending Manager",
+                                                DEPI.DAL.Enums.SwapRequestStatus.RecipientRejected => "Rejected by Colleague",
+                                                DEPI.DAL.Enums.SwapRequestStatus.FinalApproved => "Approved",
+                                                DEPI.DAL.Enums.SwapRequestStatus.FinalRejected => "Rejected",
+                                                _ => swap.Status.ToString()
+                                            };
+
                                             <tr>
                                                 <td>@swap.RecipientEmployeeId</td>
                                                 <td>@swap.Reason</td>
                                                 <td>
-                                                    <span class="status-badge @(swap.Status == "Approved" ? "status-approved" : swap.Status == "Rejected" ? "status-rejected" : swap.Status == "PendingManagerApproval" ? "status-manager" : "status-pending")">
-                                                        @(swap.Status == "PendingManagerApproval" ? "Pending Manager" : swap.Status)
-                                                    </span>
+                                                    <span class="status-badge @badgeClass">@badgeText</span>
                                                 </td>
                                             </tr>
                                         }

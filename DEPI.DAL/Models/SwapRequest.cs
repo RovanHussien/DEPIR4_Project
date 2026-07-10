@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DEPI.DAL.Enums;
 
 namespace DEPI.DAL.Model
 {
@@ -19,7 +20,7 @@ namespace DEPI.DAL.Model
 
         public Schedule? Schedule { get; set; }
         public int? ScheduleId { get; set; }
-        public string? Status { get; set; } = "Pending";
+        public SwapRequestStatus Status { get; set; } = SwapRequestStatus.PendingRecipient;
         public string? Reason { get; set; }
     }
 }

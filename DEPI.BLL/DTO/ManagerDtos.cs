@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DEPI.DAL.Enums;
+using System;
 
 namespace DEPI.BLL.DTO
 {
@@ -27,6 +28,7 @@ namespace DEPI.BLL.DTO
         public string RecipientEmployeeName { get; set; }
         public string ShiftName { get; set; }
         public DateTime? ScheduleDate { get; set; }
+        public string Status { get; set; }
     }
 
     public class ManagerMissionDto
@@ -72,6 +74,7 @@ namespace DEPI.BLL.DTO
         public int ShiftChangeRequestsCount { get; set; }
         public int ActiveMissionsCount { get; set; }
         public int ProductionLinesCount { get; set; }
+        public int TodaySchedulesCount { get; set; }  
     }
     public class ManagerProfileDto
     {
@@ -93,5 +96,44 @@ namespace DEPI.BLL.DTO
         public string Address { get; set; }
         public DateTime BirthDate { get; set; }
         public string CurrentPassword { get; set; }
+        public Microsoft.AspNetCore.Http.IFormFile ProfileImage { get; set; } // ← جديد
+    }
+    public class AssignShiftDto
+    {
+        public string EmployeeSsn { get; set; }
+        public int ShiftId { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+    }
+
+    public class EmployeeScheduleDto
+    {
+        public int ScheduleId { get; set; }
+        public string EmployeeName { get; set; }
+        public string EmployeeSsn { get; set; }
+        public DateTime ScheduleDate { get; set; }
+        public string ShiftName { get; set; }
+        public TimeSpan ShiftStart { get; set; }
+        public TimeSpan ShiftEnd { get; set; }
+    }
+
+    public class ManagerShiftDto
+    {
+        public int ShiftId { get; set; }
+        public string Name { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan EndTime { get; set; }
+    }
+    public class EmployeeScheduleRangeDto
+    {
+        public string EmployeeName { get; set; }
+        public string EmployeeSsn { get; set; }
+        public string ShiftName { get; set; }
+        public TimeSpan ShiftStart { get; set; }
+        public TimeSpan ShiftEnd { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public List<int> ScheduleIds { get; set; } = new List<int>();
+        public Microsoft.AspNetCore.Http.IFormFile ProfileImage { get; set; } // ← جديد
     }
 }

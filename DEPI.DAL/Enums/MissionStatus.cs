@@ -9,7 +9,7 @@ namespace DEPI.DAL.Enums
     public enum MissionStatus
     {
         Pending,
-        InProgress,
+        Active,     
         Completed,
         Cancelled
     }

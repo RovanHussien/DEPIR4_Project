@@ -114,7 +114,11 @@ namespace DEPI.BLL.Service.Implementation
         {
             var swapRequest = await _swapRepo.GetSwapRequestByIdAsync(swapId);
             if (swapRequest == null) return false;
-            swapRequest.Status = status;
+
+            if (!Enum.TryParse<SwapRequestStatus>(status, out var parsedStatus))
+                throw new Exception($"Invalid status value: {status}");
+
+            swapRequest.Status = parsedStatus;
             return await _swapRepo.UpdateSwapRequestAsync(swapRequest);
         }
         public async Task<bool> UpdateProfilePictureAsync(string ssn, string fileName)

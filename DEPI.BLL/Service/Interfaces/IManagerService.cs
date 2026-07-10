@@ -29,5 +29,12 @@ namespace DEPI.BLL.Service.Interfaces
 
         ManagerProfileDto GetManagerProfile(string applicationUserId);
         Task<(bool Success, string ErrorMessage)> UpdateManagerProfileAsync(string applicationUserId, ManagerProfileEditDto dto);
+        List<ManagerShiftDto> GetAvailableShifts();
+        List<EmployeeScheduleDto> GetDepartmentSchedules(int departmentId, DateTime? date);
+        (bool Success, string ErrorMessage) AssignShiftToEmployee(AssignShiftDto dto, int departmentId);
+        bool RemoveSchedule(int scheduleId, int departmentId);
+        (bool Success, string ErrorMessage) ExecuteSwap(int requestId, int departmentId);
+        (bool Success, string ErrorMessage) RejectSwap(int requestId, int departmentId);
+        List<EmployeeScheduleRangeDto> GetDepartmentScheduleRanges(int departmentId, DateTime? date);
     }
 }
