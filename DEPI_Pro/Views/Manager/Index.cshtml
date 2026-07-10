@@ -1,4 +1,4 @@
-﻿@model DEPI.BLL.DTO.ManagerDashboardDto
+@model DEPI.BLL.DTO.ManagerDashboardDto
 @{
     ViewData["Title"] = "Manager Dashboard";
 }
@@ -58,7 +58,8 @@
     <div class="col-md-3">
         <div class="card text-center shadow-sm">
             <div class="card-body">
-                <p class="card-text mt-3">Attendance</p>
+                <h5 class="card-title text-muted"><i class="bi bi-fingerprint"></i></h5>
+                <p class="card-text">Attendance</p>
                 <a asp-action="Attendance" class="btn btn-sm btn-dark">View</a>
             </div>
         </div>

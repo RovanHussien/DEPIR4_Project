@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using DEPI.DAL.Model;
 using DEPI.DAL.Models;
+using DEPI.DAL.Enums;
 namespace DEPI.DAL.DbContext
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
@@ -58,6 +59,10 @@ namespace DEPI.DAL.DbContext
                 .WithOne(i => i.Employee)
                 .HasForeignKey<Employee>(e => e.UserId)
                 .IsRequired(false);
+
+                entity.HasIndex(e => e.FingerprintId)
+                    .IsUnique()
+                    .HasFilter("[FingerprintId] IS NOT NULL");
             });
            
 
@@ -124,10 +129,6 @@ namespace DEPI.DAL.DbContext
                     .WithMany(v => v.Schedules)
                     .HasForeignKey(s => s.VacationRequestId);
 
-                entity.HasOne(s => s.Attendance)
-                    .WithOne(a => a.Schedule)
-                    .HasForeignKey<Attendance>(a => a.ScheduleId);
-
                 entity.HasOne(s => s.SwapRequest)
                     .WithOne(sr => sr.Schedule)
                     .HasForeignKey<SwapRequest>(sr => sr.ScheduleId);
@@ -136,6 +137,16 @@ namespace DEPI.DAL.DbContext
             modelBuilder.Entity<Attendance>(entity =>
             {
                 entity.HasKey(a => a.AttendanceId);
+
+                entity.HasOne(a => a.Employee)
+                    .WithMany(e => e.Attendances)
+                    .HasForeignKey(a => a.EmployeeSsn)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(a => a.Shift)
+                    .WithMany()
+                    .HasForeignKey(a => a.ShiftId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<ProductionLine>(entity =>

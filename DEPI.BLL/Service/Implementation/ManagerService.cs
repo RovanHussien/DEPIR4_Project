@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using DEPI.BLL.DTO;
@@ -203,21 +203,28 @@ namespace DEPI.BLL.Service.Implementation
             var ssns = GetEmployeeSsnsInDepartment(departmentId);
 
             var query = _context.Attendances
-                .Include(a => a.Schedule).ThenInclude(s => s.Employee)
-                .Where(a => a.Schedule != null && ssns.Contains(a.Schedule.EmployeeSsn));
+                .Include(a => a.Employee)
+                .Include(a => a.Shift)
+                .Where(a => ssns.Contains(a.EmployeeSsn));
 
             if (date.HasValue)
-                query = query.Where(a => a.Schedule.ScheduleDate.Date == date.Value.Date);
+                query = query.Where(a => a.Date == date.Value.Date);
 
             return query
-                .OrderByDescending(a => a.Schedule.ScheduleDate)
+                .OrderByDescending(a => a.Date)
                 .Select(a => new ManagerAttendanceDto
                 {
                     AttendanceId = a.AttendanceId,
-                    EmployeeName = a.Schedule.Employee.FirstName + " " + a.Schedule.Employee.LastName,
-                    ScheduleDate = a.Schedule.ScheduleDate,
-                    TimeIn = a.TimeIn,
-                    TimeOut = a.TimeOut
+                    EmployeeName = a.Employee.FirstName + " " + a.Employee.LastName,
+                    Date = a.Date,
+                    CheckInTime = a.CheckInTime,
+                    CheckOutTime = a.CheckOutTime,
+                    Status = a.Status.ToString(),
+                    StatusBadgeClass = a.Status == DAL.Enums.AttendanceStatus.Present ? "bg-success" :
+                                       a.Status == DAL.Enums.AttendanceStatus.Late ? "bg-warning text-dark" :
+                                       a.Status == DAL.Enums.AttendanceStatus.Absent ? "bg-danger" : "bg-info",
+                    ShiftName = a.Shift != null ? a.Shift.Name : "N/A",
+                    Notes = a.Notes
                 })
                 .ToList();
         }

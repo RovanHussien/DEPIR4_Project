@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 text-center">
+            <div class="pharma-card">
+                <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 4rem;"></i>
+                <h2 class="mt-3 mb-2">Something Went Wrong</h2>
+                <p class="text-muted mb-3">
+                    An unexpected error occurred while processing your request. 
+                    Our team has been notified and is looking into it.
+                </p>
+                @if (ViewBag.ErrorId != null)
+                {
+                    <div class="alert alert-light border mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-hash me-1"></i>Error Reference ID: 
+                            <strong class="text-dark">@ViewBag.ErrorId</strong>
+                        </small>
+                    </div>
+                    <p class="text-muted small">
+                        Please provide this reference ID if you contact support.
+                    </p>
+                }
+                <div class="mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-primary me-2">
+                        <i class="bi bi-house-door me-1"></i>Go Home
+                    </a>
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Go Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

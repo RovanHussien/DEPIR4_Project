@@ -49,6 +49,11 @@
                                 <li><a class="dropdown-item" href="/Admin/Shifts"><i class="bi bi-clock me-2"></i> Shifts</a></li>
                             </ul>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="ManagerAttendance">
+                                <i class="bi bi-fingerprint me-1"></i> Manager Attendance
+                            </a>
+                        </li>
                     </ul>
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
@@ -99,11 +104,11 @@
             <span class="mb-2 mb-md-0 text-muted">
                 &copy; 2026 - <strong class="text-dark">PharmaPro Admin Panel</strong>
             </span>
-            <div class="d-flex gap-3 justify-content-center">
+           @*  <div class="d-flex gap-3 justify-content-center">
                 <a asp-area="" asp-controller="Home" asp-action="Index" class="text-decoration-none text-primary">
                     <i class="bi bi-house me-1"></i> Back to Main Site
                 </a>
-            </div>
+            </div> *@
         </div>
     </footer>
 

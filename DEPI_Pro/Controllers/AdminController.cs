@@ -24,12 +24,14 @@ namespace DEPI.PLL.Controllers
         private readonly IDepartmentService _departmentService;
         private readonly IProductionLineService _productionLineService;
         private readonly IShiftService _shiftService;
+        private readonly IAttendanceService _attendanceService;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public AdminController(IAccountService accountService, IAdminService adminService,
             IDepartmentService departmentService, IProductionLineService productionLineService,
-            IShiftService shiftService, ApplicationDbContext context,
+            IShiftService shiftService, IAttendanceService attendanceService,
+            ApplicationDbContext context,
             UserManager<ApplicationUser> userManager)
         {
             _accountService = accountService;
@@ -37,6 +39,7 @@ namespace DEPI.PLL.Controllers
             _departmentService = departmentService;
             _productionLineService = productionLineService;
             _shiftService = shiftService;
+            _attendanceService = attendanceService;
             _context = context;
             _userManager = userManager;
         }
@@ -438,6 +441,13 @@ namespace DEPI.PLL.Controllers
                 TempData["ErrorMessage"] = ex.Message;
             }
             return RedirectToAction(nameof(Shifts));
+        }
+
+        public async Task<IActionResult> ManagerAttendance(DateTime? date)
+        {
+            ViewBag.SelectedDate = date;
+            var records = await _attendanceService.GetManagerAttendanceAsync(date);
+            return View(records);
         }
 
         private async Task PopulateManagersDropdown()

@@ -68,14 +68,15 @@ namespace DEPI.PLL.Controllers
             if (ModelState.IsValid) 
             {
                 var result = await _accountService.LoginAsync(login);
+
+                // Password correct but account not approved yet
+                if (result.IsNotAllowed)
+                {
+                    return View("Pending");
+                }
+
                 if (result.Succeeded) 
                 {
-                    var status = await _accountService.CheckUserStatus(login.Email);
-                    if (status == "Pending" || status == "Rejected") 
-                    {
-                        return View("Pending");
-                    }
-                    
                     var appUser = await userManager.FindByEmailAsync(login.Email);
                     if (appUser != null && await userManager.IsInRoleAsync(appUser, "Admin"))
                     {

@@ -1,14 +1,15 @@
-@model List<DEPI.BLL.DTO.ManagerAttendanceDto>
+@model List<DEPI.BLL.DTO.AttendanceRecordDto>
 @{
-    ViewData["Title"] = "Employee Attendance";
+    ViewData["Title"] = "Manager Attendance";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
     DateTime? selectedDate = ViewBag.SelectedDate;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-fingerprint me-2"></i>Employee Attendance</h2>
+    <h2><i class="bi bi-fingerprint me-2"></i>Manager Attendance</h2>
 </div>
 
-<form method="get" asp-action="Attendance" class="row g-2 mb-4">
+<form method="get" asp-action="ManagerAttendance" class="row g-2 mb-4">
     <div class="col-md-3">
         <div class="input-group">
             <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
@@ -19,7 +20,7 @@
         <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Filter</button>
     </div>
     <div class="col-md-2">
-        <a asp-action="Attendance" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i>Show All</a>
+        <a asp-action="ManagerAttendance" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i>Show All</a>
     </div>
 </form>
 
@@ -70,20 +71,20 @@
         <div class="col-md-5">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Attendance Distribution</h6>
+                    <h6 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Manager Attendance Distribution</h6>
                 </div>
                 <div class="card-body d-flex justify-content-center align-items-center" style="height: 280px;">
-                    <canvas id="attendancePieChart"></canvas>
+                    <canvas id="mgrPieChart"></canvas>
                 </div>
             </div>
         </div>
         <div class="col-md-7">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Weekly Attendance Trend</h6>
+                    <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Weekly Manager Trend</h6>
                 </div>
                 <div class="card-body" style="height: 280px;">
-                    <canvas id="attendanceBarChart"></canvas>
+                    <canvas id="mgrBarChart"></canvas>
                 </div>
             </div>
         </div>
@@ -99,13 +100,12 @@
         </button>
     </div>
 
-    <!-- DataTable -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
-            <table id="attendanceTable" class="table table-hover table-striped mb-0" style="width:100%">
+            <table id="mgrAttendanceTable" class="table table-hover table-striped mb-0" style="width:100%">
                 <thead class="table-dark">
                     <tr>
-                        <th><i class="bi bi-person me-1"></i>Employee</th>
+                        <th><i class="bi bi-person-badge me-1"></i>Manager</th>
                         <th><i class="bi bi-calendar-date me-1"></i>Date</th>
                         <th><i class="bi bi-clock me-1"></i>Shift</th>
                         <th><i class="bi bi-box-arrow-in-right me-1"></i>Check In</th>
@@ -152,7 +152,7 @@ else
 {
     <div class="alert alert-info text-center">
         <i class="bi bi-info-circle me-2"></i>
-        No attendance records found for the selected date.
+        No attendance records found for managers on the selected date.
     </div>
 }
 
@@ -176,10 +176,8 @@ else
 
     <script>
         $(document).ready(function () {
-            // ═══════════════════════════════════════
-            // DataTables Initialization with Pagination
-            // ═══════════════════════════════════════
-            var table = $('#attendanceTable').DataTable({
+            // DataTable
+            var table = $('#mgrAttendanceTable').DataTable({
                 pageLength: 15,
                 lengthMenu: [[10, 15, 25, 50, -1], [10, 15, 25, 50, "All"]],
                 order: [[1, 'desc']],
@@ -199,13 +197,13 @@ else
                 buttons: [
                     {
                         extend: 'excelHtml5',
-                        title: 'Attendance Report',
+                        title: 'Manager Attendance Report',
                         className: 'btn btn-success btn-sm',
                         exportOptions: { columns: ':visible' }
                     },
                     {
                         extend: 'pdfHtml5',
-                        title: 'Attendance Report',
+                        title: 'Manager Attendance Report',
                         className: 'btn btn-danger btn-sm',
                         orientation: 'landscape',
                         pageSize: 'A4',
@@ -214,17 +212,10 @@ else
                 ]
             });
 
-            // Wire export buttons
-            $('#btnExportExcel').on('click', function () {
-                table.button('.buttons-excel').trigger();
-            });
-            $('#btnExportPdf').on('click', function () {
-                table.button('.buttons-pdf').trigger();
-            });
+            $('#btnExportExcel').on('click', function () { table.button('.buttons-excel').trigger(); });
+            $('#btnExportPdf').on('click', function () { table.button('.buttons-pdf').trigger(); });
 
-            // ═══════════════════════════════════════
-            // Pie Chart - Today's Distribution
-            // ═══════════════════════════════════════
+            // Pie Chart
             @{
                 var presentCount = Model.Count(m => m.Status == "Present");
                 var lateCount = Model.Count(m => m.Status == "Late");
@@ -232,7 +223,7 @@ else
                 var onLeaveCount = Model.Count(m => m.Status == "OnLeave");
             }
 
-            var pieCtx = document.getElementById('attendancePieChart').getContext('2d');
+            var pieCtx = document.getElementById('mgrPieChart').getContext('2d');
             new Chart(pieCtx, {
                 type: 'doughnut',
                 data: {
@@ -245,12 +236,6 @@ else
                             'rgba(239, 68, 68, 0.85)',
                             'rgba(59, 130, 246, 0.85)'
                         ],
-                        borderColor: [
-                            'rgba(16, 185, 129, 1)',
-                            'rgba(245, 158, 11, 1)',
-                            'rgba(239, 68, 68, 1)',
-                            'rgba(59, 130, 246, 1)'
-                        ],
                         borderWidth: 2,
                         hoverOffset: 8
                     }]
@@ -262,44 +247,23 @@ else
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: {
-                                padding: 15,
-                                usePointStyle: true,
-                                font: { size: 12, family: 'Inter' }
-                            }
+                            labels: { padding: 15, usePointStyle: true, font: { size: 12, family: 'Inter' } }
                         }
                     }
                 }
             });
 
-            // ═══════════════════════════════════════
-            // Bar Chart - Weekly Trend (from API)
-            // ═══════════════════════════════════════
-            $.get('/api/AttendanceStats/weekly-trend?days=7', function (data) {
-                var barCtx = document.getElementById('attendanceBarChart').getContext('2d');
+            // Bar Chart
+            $.get('/api/AttendanceStats/weekly-trend?days=7&role=Manager', function (data) {
+                var barCtx = document.getElementById('mgrBarChart').getContext('2d');
                 new Chart(barCtx, {
                     type: 'bar',
                     data: {
                         labels: data.map(d => d.date),
                         datasets: [
-                            {
-                                label: 'Present',
-                                data: data.map(d => d.present),
-                                backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                                borderRadius: 4
-                            },
-                            {
-                                label: 'Late',
-                                data: data.map(d => d.late),
-                                backgroundColor: 'rgba(245, 158, 11, 0.8)',
-                                borderRadius: 4
-                            },
-                            {
-                                label: 'Absent',
-                                data: data.map(d => d.absent),
-                                backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                                borderRadius: 4
-                            }
+                            { label: 'Present', data: data.map(d => d.present), backgroundColor: 'rgba(16, 185, 129, 0.8)', borderRadius: 4 },
+                            { label: 'Late', data: data.map(d => d.late), backgroundColor: 'rgba(245, 158, 11, 0.8)', borderRadius: 4 },
+                            { label: 'Absent', data: data.map(d => d.absent), backgroundColor: 'rgba(239, 68, 68, 0.8)', borderRadius: 4 }
                         ]
                     },
                     options: {
@@ -310,13 +274,7 @@ else
                             y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } }
                         },
                         plugins: {
-                            legend: {
-                                position: 'top',
-                                labels: {
-                                    usePointStyle: true,
-                                    font: { size: 11, family: 'Inter' }
-                                }
-                            }
+                            legend: { position: 'top', labels: { usePointStyle: true, font: { size: 11, family: 'Inter' } } }
                         }
                     }
                 });

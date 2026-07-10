@@ -1,4 +1,4 @@
-﻿using DEPI.DAL.Enums;
+using DEPI.DAL.Enums;
 using DEPI.DAL.Models;
 using System;
 using System.Collections.Generic;
@@ -64,6 +64,12 @@ namespace DEPI.DAL.Model
         public string? ProfilePicture { get; set; }
         public int VacationRequestsCount { get; set; } = 5;
         public int? LastResetYear { get; set; }
+
+        // Fingerprint identifier for attendance system
+        public string? FingerprintId { get; set; }
+
+        // navigation properties for attendance
+        public List<Attendance> Attendances { get; set; }
 
     }
 }

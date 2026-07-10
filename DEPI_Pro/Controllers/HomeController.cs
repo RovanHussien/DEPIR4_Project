@@ -52,6 +52,11 @@ namespace DEPI_Pro.Controllers
             return View();
         }
 
-        
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error(string errorId)
+        {
+            ViewBag.ErrorId = errorId;
+            return View();
+        }
     }
 }

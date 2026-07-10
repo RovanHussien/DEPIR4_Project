@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,8 +24,7 @@ namespace DEPI.DAL.Model
         public Shift Shift { get; set; }
         public int? ShiftId { get; set; }
 
-        // navigation property for attendance
-        public Attendance Attendance { get; set; }
+
 
         // navigation property for jop description
         public JopDescription JopDescription { get; set; }

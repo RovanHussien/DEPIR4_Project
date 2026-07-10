@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace DEPI.BLL.DTO
 {
@@ -53,9 +53,13 @@ namespace DEPI.BLL.DTO
     {
         public int AttendanceId { get; set; }
         public string EmployeeName { get; set; }
-        public DateTime ScheduleDate { get; set; }
-        public DateTime TimeIn { get; set; }
-        public DateTime TimeOut { get; set; }
+        public DateTime Date { get; set; }
+        public DateTime? CheckInTime { get; set; }
+        public DateTime? CheckOutTime { get; set; }
+        public string Status { get; set; }
+        public string StatusBadgeClass { get; set; }
+        public string ShiftName { get; set; }
+        public string Notes { get; set; }
     }
 
     public class ManagerProductionLineDto

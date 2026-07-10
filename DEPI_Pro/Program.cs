@@ -8,6 +8,9 @@ using DEPI.DAL.Repo.Interfaces;
 using DEPI.DAL.Repo.Implementation;
 using DEPI.BLL.Service.Implementation;
 using DEPI.BLL.Service.Interfaces;
+using DEPI_Pro.Services;
+using DEPI_Pro.Middleware;
+using Serilog;
 
 namespace DEPI_Pro
 {
@@ -16,6 +19,13 @@ namespace DEPI_Pro
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            // ── Serilog Structured Logging ──
+            builder.Host.UseSerilog((ctx, lc) => lc
+                .ReadFrom.Configuration(ctx.Configuration)
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
+                .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30));
 
             builder.Services.AddScoped<IManagerService, ManagerService>();
             // Add services to the container.
@@ -27,6 +37,8 @@ namespace DEPI_Pro
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+            // ── In-Memory Caching ──
+            builder.Services.AddMemoryCache();
 
             builder.Services.AddScoped<IEmployeeRepo, EmployeeRepo>();
             builder.Services.AddScoped<IUserRepo, UserRepo>();
@@ -34,7 +46,6 @@ namespace DEPI_Pro
             builder.Services.AddScoped<IScheduleRepo, ScheduleRepo>();
             builder.Services.AddScoped<IVacationRequestRepo, VacationRequestRepo>();
             builder.Services.AddScoped<ISwapRequestRepo, SwapRequestRepo>();
-
 
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
@@ -47,6 +58,9 @@ namespace DEPI_Pro
             builder.Services.AddScoped<IProductionLineService, ProductionLineService>();
             builder.Services.AddScoped<IShiftService, ShiftService>();
             builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<IAttendanceRepo, AttendanceRepo>();
+            builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+            builder.Services.AddHostedService<AbsenteeBackgroundService>();
             var app = builder.Build();
 
             // Seed Roles, Admin User, and Manager User
@@ -59,13 +73,21 @@ namespace DEPI_Pro
                 await SeedAdminUser(userManager);
                 await SeedManagerUsers(userManager, context);
                 await SeedManagerDepartment(context);
+                await SeedFingerprintIds(context);
             }
+
+            // ── Global Exception Handling Middleware ──
+            app.UseMiddleware<GlobalExceptionMiddleware>();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
             }
+
+            // Serilog request logging for structured HTTP logs
+            app.UseSerilogRequestLogging();
+
             app.UseRouting();
 
             app.UseAuthentication();
@@ -236,6 +258,29 @@ namespace DEPI_Pro
             context.Departments.Add(newDepartment);
             await context.SaveChangesAsync();
             Console.WriteLine("✓ Created new department and linked it to Manager (MGR001)");
+        }
+
+        private static async Task SeedFingerprintIds(ApplicationDbContext context)
+        {
+            var employeesWithoutFingerprint = await context.Employees
+                .Where(e => e.FingerprintId == null)
+                .ToListAsync();
+
+            if (!employeesWithoutFingerprint.Any())
+            {
+                Console.WriteLine("✓ All employees already have fingerprint IDs assigned");
+                return;
+            }
+
+            int counter = 1;
+            foreach (var employee in employeesWithoutFingerprint)
+            {
+                employee.FingerprintId = $"FP-{employee.EmployeeSsn}-{counter:D4}";
+                counter++;
+            }
+
+            await context.SaveChangesAsync();
+            Console.WriteLine($"✓ Assigned fingerprint IDs to {employeesWithoutFingerprint.Count} employees");
         }
     }
 }

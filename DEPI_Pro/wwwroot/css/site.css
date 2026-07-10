@@ -301,3 +301,31 @@ label {
   background-color: var(--color-bg) !important;
   transform: translateX(4px);
 }
+
+/* Custom Admin Navbar Styling */
+.navbar-nav .nav-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  font-size: 0.925rem;
+  padding: 0.5rem 0.85rem !important;
+  white-space: nowrap; /* Prevent wrapping of menu items */
+}
+
+.navbar-nav .nav-link i {
+  font-size: 1.1rem;
+  margin: 0 !important; /* Reset margins */
+}
+
+.navbar-nav .nav-item span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  font-size: 0.925rem;
+  white-space: nowrap;
+}
+
+.navbar-nav .nav-item span i {
+  font-size: 1.1rem;
+  margin: 0 !important;
+}
