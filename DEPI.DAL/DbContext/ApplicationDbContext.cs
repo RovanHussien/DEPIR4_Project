@@ -11,8 +11,8 @@ namespace DEPI.DAL.DbContext
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
-        public ApplicationDbContext(DbContextOptions options):base(options) 
-        { 
+        public ApplicationDbContext(DbContextOptions options) : base(options)
+        {
 
         }
         public DbSet<Employee> Employees { get; set; }
@@ -59,7 +59,7 @@ namespace DEPI.DAL.DbContext
                 .HasForeignKey<Employee>(e => e.UserId)
                 .IsRequired(false);
             });
-           
+
 
             modelBuilder.Entity<Department>(entity =>
             {
@@ -96,6 +96,11 @@ namespace DEPI.DAL.DbContext
             modelBuilder.Entity<Schedule>(entity =>
             {
                 entity.HasKey(s => s.ScheduleId);
+
+                entity.Property(s => s.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20)
+                    .HasDefaultValue(DEPI.DAL.Enums.AttendanceStatus.Absent);
 
                 entity.HasOne(s => s.Employee)
                     .WithMany(e => e.Schedules)
@@ -159,7 +164,7 @@ namespace DEPI.DAL.DbContext
             modelBuilder.Entity<Mission>(entity =>
             {
                 entity.HasKey(m => m.MissionId);
-             
+
                 entity.HasOne(m => m.AuthorizedEmployee)
                     .WithMany(e => e.AuthorizedMissions)
                     .HasForeignKey(m => m.AuthorizedEmployeeSsn)

@@ -43,6 +43,7 @@ namespace DEPI.PLL.Controllers
                 return NotFound("Sorry, employee profile not found.");
 
             ViewData["Schedules"] = await _employeeService.GetMyScheduleAsync(ssn);
+            ViewData["TodaySchedule"] = await _employeeService.GetTodayScheduleAsync(ssn);
             ViewData["ActiveTab"] = tab; // ✅
             return View(employeeProfile);
         }

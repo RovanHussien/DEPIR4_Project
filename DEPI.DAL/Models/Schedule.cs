@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DEPI.DAL.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,10 @@ namespace DEPI.DAL.Model
         public int ScheduleId { get; set; }
         public string ScheduleName { get; set; }
         public DateTime ScheduleDate { get; set; }
+
+        // Daily attendance status - defaults to Absent until changed
+        // (e.g. by HR/Manager, or a future check-in feature)
+        public AttendanceStatus Status { get; set; } = AttendanceStatus.Absent;
 
         // navigation property for employee
         public Employee Employee { get; set; }
@@ -36,9 +41,10 @@ namespace DEPI.DAL.Model
         public int? ProductionLineId { get; set; }
         // navigation property for vacation request
         public VacationRequest VacationRequest { get; set; }
-         public int? VacationRequestId { get; set; }
+        public int? VacationRequestId { get; set; }
 
         // navigation property for swap request
         public SwapRequest SwapRequest { get; set; }
     }
 }
+
