@@ -8,9 +8,10 @@ using DEPI.DAL.Repo.Interfaces;
 using DEPI.DAL.Repo.Implementation;
 using DEPI.BLL.Service.Implementation;
 using DEPI.BLL.Service.Interfaces;
-using DEPI_Pro.Services;
-using DEPI_Pro.Middleware;
 using Serilog;
+using DEPI.BLL.BackgroundServices;
+using DEPI_Pro.Middleware;
+
 
 namespace DEPI_Pro
 {
@@ -40,14 +41,21 @@ namespace DEPI_Pro
             // ── In-Memory Caching ──
             builder.Services.AddMemoryCache();
 
+            // Runs on startup + once every day: creates today's Schedule/attendance
+            // row (Status = Absent by default) for every employee.
+            builder.Services.AddHostedService<DailyScheduleGeneratorService>();
+
+
             builder.Services.AddScoped<IEmployeeRepo, EmployeeRepo>();
             builder.Services.AddScoped<IUserRepo, UserRepo>();
 
             builder.Services.AddScoped<IScheduleRepo, ScheduleRepo>();
             builder.Services.AddScoped<IVacationRequestRepo, VacationRequestRepo>();
             builder.Services.AddScoped<ISwapRequestRepo, SwapRequestRepo>();
+            builder.Services.AddScoped<IAttendanceRepo, AttendanceRepo>();
 
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+            builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 
             builder.Services.AddScoped<IDepartmentRepo, DepartmentRepo>();
             builder.Services.AddScoped<IProductionLineRepo, ProductionLineRepo>();
@@ -58,9 +66,6 @@ namespace DEPI_Pro
             builder.Services.AddScoped<IProductionLineService, ProductionLineService>();
             builder.Services.AddScoped<IShiftService, ShiftService>();
             builder.Services.AddScoped<IEmailService, EmailService>();
-            builder.Services.AddScoped<IAttendanceRepo, AttendanceRepo>();
-            builder.Services.AddScoped<IAttendanceService, AttendanceService>();
-            builder.Services.AddHostedService<AbsenteeBackgroundService>();
             var app = builder.Build();
 
             // Seed Roles, Admin User, and Manager User

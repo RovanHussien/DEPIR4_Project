@@ -20,8 +20,8 @@ namespace DEPI.DAL.Model
         public Employee Employee { get; set; }
         public string EmployeeSsn { get; set; }
 
-        // navigation property for shift
-        public Shift? Shift { get; set; }
-        public int? ShiftId { get; set; }
+        // navigation property for schedule
+        public Schedule? Schedule { get; set; }
+        public int? ScheduleId { get; set; }
     }
 }

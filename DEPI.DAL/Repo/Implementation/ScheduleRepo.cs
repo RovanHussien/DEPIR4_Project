@@ -1,4 +1,4 @@
-﻿using DEPI.DAL.DbContext;
+using DEPI.DAL.DbContext;
 using DEPI.DAL.Model;
 using DEPI.DAL.Repo.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -38,7 +38,6 @@ namespace DEPI.DAL.Repo.Implementation
                     .ThenInclude(p => p.Department)
                         .ThenInclude(d => d.Manager)
                 .Include(s => s.Mission)
-                .Include(s => s.Attendance)
                 .FirstOrDefaultAsync(s => s.EmployeeSsn == empSsn && s.ScheduleDate.Date == today);
         }
 

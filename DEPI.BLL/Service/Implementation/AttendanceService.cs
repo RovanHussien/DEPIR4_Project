@@ -82,7 +82,6 @@ namespace DEPI.BLL.Service.Implementation
                     CheckInTime = now,
                     Status = status,
                     EmployeeSsn = employee.EmployeeSsn,
-                    ShiftId = employee.ShiftId,
                     Notes = notes
                 };
                 await _attendanceRepo.AddAttendanceAsync(attendance);
@@ -168,7 +167,6 @@ namespace DEPI.BLL.Service.Implementation
                         CheckOutTime = null,
                         Status = AttendanceStatus.Absent,
                         EmployeeSsn = employee.EmployeeSsn,
-                        ShiftId = employee.ShiftId,
                         Notes = "Auto-marked as absent (no fingerprint scan within 30 minutes of shift start)"
                     };
                     await _attendanceRepo.AddAttendanceAsync(attendance);
@@ -188,7 +186,7 @@ namespace DEPI.BLL.Service.Implementation
                 PresentCount = records.Count(r => r.Status == AttendanceStatus.Present),
                 LateCount = records.Count(r => r.Status == AttendanceStatus.Late),
                 AbsentCount = records.Count(r => r.Status == AttendanceStatus.Absent),
-                OnLeaveCount = records.Count(r => r.Status == AttendanceStatus.OnLeave),
+                OnLeaveCount = 0,
                 Records = records.Select(MapToDto).ToList()
             };
         }
@@ -231,7 +229,7 @@ namespace DEPI.BLL.Service.Implementation
                 CheckOutTime = a.CheckOutTime,
                 Status = a.Status.ToString(),
                 StatusBadgeClass = GetBadgeClass(a.Status),
-                ShiftName = a.Shift?.Name ?? "N/A",
+                ShiftName = a.Schedule?.Shift?.Name ?? "N/A",
                 Notes = a.Notes
             };
         }
@@ -243,7 +241,6 @@ namespace DEPI.BLL.Service.Implementation
                 AttendanceStatus.Present => "bg-success",
                 AttendanceStatus.Late => "bg-warning text-dark",
                 AttendanceStatus.Absent => "bg-danger",
-                AttendanceStatus.OnLeave => "bg-info",
                 _ => "bg-secondary"
             };
         }

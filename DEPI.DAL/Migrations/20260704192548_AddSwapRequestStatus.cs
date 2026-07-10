@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -7,23 +7,15 @@ namespace DEPI.DAL.Migrations
     /// <inheritdoc />
     public partial class AddSwapRequestStatus : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "Status",
-                table: "SwapRequests",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
+            // Redundant migration, skipped
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Status",
-                table: "SwapRequests");
+            // Redundant migration, skipped
         }
     }
 }

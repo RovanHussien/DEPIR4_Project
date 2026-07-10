@@ -25,7 +25,7 @@ namespace DEPI.DAL.Repo.Implementation
             var today = DateTime.Today;
             return await _context.Attendances
                 .Include(a => a.Employee)
-                .Include(a => a.Shift)
+                .Include(a => a.Schedule).ThenInclude(s => s.Shift)
                 .FirstOrDefaultAsync(a => a.EmployeeSsn == employeeSsn && a.Date == today);
         }
 
@@ -33,7 +33,7 @@ namespace DEPI.DAL.Repo.Implementation
         {
             var query = _context.Attendances
                 .Include(a => a.Employee)
-                .Include(a => a.Shift)
+                .Include(a => a.Schedule).ThenInclude(s => s.Shift)
                 .Where(a => a.EmployeeSsn == employeeSsn);
 
             if (from.HasValue)
@@ -48,7 +48,7 @@ namespace DEPI.DAL.Repo.Implementation
         {
             return await _context.Attendances
                 .Include(a => a.Employee)
-                .Include(a => a.Shift)
+                .Include(a => a.Schedule).ThenInclude(s => s.Shift)
                 .Where(a => a.Date == date.Date)
                 .OrderBy(a => a.Employee.FirstName)
                 .ToListAsync();
@@ -58,7 +58,7 @@ namespace DEPI.DAL.Repo.Implementation
         {
             var query = _context.Attendances
                 .Include(a => a.Employee)
-                .Include(a => a.Shift)
+                .Include(a => a.Schedule).ThenInclude(s => s.Shift)
                 .Where(a => employeeSsns.Contains(a.EmployeeSsn));
 
             if (date.HasValue)

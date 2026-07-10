@@ -148,9 +148,9 @@ namespace DEPI.DAL.DbContext
                     .HasForeignKey(a => a.EmployeeSsn)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(a => a.Shift)
+                entity.HasOne(a => a.Schedule)
                     .WithMany()
-                    .HasForeignKey(a => a.ShiftId)
+                    .HasForeignKey(a => a.ScheduleId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 

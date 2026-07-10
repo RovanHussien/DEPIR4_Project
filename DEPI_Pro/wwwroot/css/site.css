@@ -121,12 +121,23 @@ label {
   display: inline-block;
 }
 
-.form-control, .form-select {
+.form-control {
   font-family: var(--font-main);
   background-color: var(--color-surface);
   border: 1.5px solid #e2e8f0;
   border-radius: var(--border-radius-sm);
   padding: 0.625rem 0.875rem;
+  color: var(--color-text);
+  font-size: 0.925rem;
+  transition: var(--transition-normal);
+}
+
+.form-select {
+  font-family: var(--font-main);
+  background-color: var(--color-surface);
+  border: 1.5px solid #e2e8f0;
+  border-radius: var(--border-radius-sm);
+  padding: 0.625rem 2.25rem 0.625rem 0.875rem;
   color: var(--color-text);
   font-size: 0.925rem;
   transition: var(--transition-normal);

@@ -10,7 +10,6 @@ namespace DEPI.DAL.Enums
     {
         Present,   
         Late,      
-        Absent,     
-        OnLeave     
+        Absent,
     }
 }

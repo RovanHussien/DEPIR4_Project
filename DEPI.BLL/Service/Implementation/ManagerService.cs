@@ -273,8 +273,8 @@ namespace DEPI.BLL.Service.Implementation
                     _context.Attendances.Add(new Attendance
                     {
                         ScheduleId = schedule.ScheduleId,
-                        TimeIn = timeIn,
-                        TimeOut = timeOut
+                        CheckInTime = timeIn,
+                        CheckOutTime = timeOut
                     });
                 }
             }
@@ -282,7 +282,7 @@ namespace DEPI.BLL.Service.Implementation
             _context.SaveChanges();
             var query = _context.Attendances
                 .Include(a => a.Employee)
-                .Include(a => a.Shift)
+                .Include(a => a.Schedule).ThenInclude(s => s.Shift)
                 .Where(a => ssns.Contains(a.EmployeeSsn));
 
             if (date.HasValue)
@@ -301,7 +301,7 @@ namespace DEPI.BLL.Service.Implementation
                     StatusBadgeClass = a.Status == DAL.Enums.AttendanceStatus.Present ? "bg-success" :
                                        a.Status == DAL.Enums.AttendanceStatus.Late ? "bg-warning text-dark" :
                                        a.Status == DAL.Enums.AttendanceStatus.Absent ? "bg-danger" : "bg-info",
-                    ShiftName = a.Shift != null ? a.Shift.Name : "N/A",
+                    ShiftName = (a.Schedule != null && a.Schedule.Shift != null) ? a.Schedule.Shift.Name : "N/A",
                     Notes = a.Notes
                 })
                 .ToList();
