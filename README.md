@@ -1,6 +1,6 @@
-# PharmaPro - Factory Management System (DEPI Project)
+# StaffFlow - Factory Management System (DEPI Project)
 
-PharmaPro is a comprehensive 3-Tier ASP.NET Core MVC application designed for managing pharmaceutical manufacturing facilities. The platform automates administrative, operational, and scheduling workflows, ensuring seamless coordination between administrators, managers, and employees.
+StaffFlow is a comprehensive 3-Tier ASP.NET Core MVC application designed for managing pharmaceutical manufacturing facilities. The platform automates administrative, operational, and scheduling workflows, ensuring seamless coordination between administrators, managers, and employees.
 
 ---
 
