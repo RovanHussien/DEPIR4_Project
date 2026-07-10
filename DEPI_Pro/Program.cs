@@ -8,6 +8,7 @@ using DEPI.DAL.Repo.Interfaces;
 using DEPI.DAL.Repo.Implementation;
 using DEPI.BLL.Service.Implementation;
 using DEPI.BLL.Service.Interfaces;
+using DEPI.BLL.BackgroundServices;
 
 namespace DEPI_Pro
 {
@@ -47,6 +48,11 @@ namespace DEPI_Pro
             builder.Services.AddScoped<IProductionLineService, ProductionLineService>();
             builder.Services.AddScoped<IShiftService, ShiftService>();
             builder.Services.AddScoped<IEmailService, EmailService>();
+
+            // Runs on startup + once every day: creates today's Schedule/attendance
+            // row (Status = Absent by default) for every employee.
+            builder.Services.AddHostedService<DailyScheduleGeneratorService>();
+
             var app = builder.Build();
 
             // Seed Roles, Admin User, and Manager User

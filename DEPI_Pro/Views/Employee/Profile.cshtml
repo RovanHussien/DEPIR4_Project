@@ -5,6 +5,16 @@
     ViewData["Title"] = "Employee Dashboard";
     var schedules = ViewData["Schedules"] as IEnumerable<DEPI.DAL.Model.Schedule> ?? new List<DEPI.DAL.Model.Schedule>();
     var employeeRole = ViewData["Role"] as string ?? "Employee";
+    var todaySchedule = ViewData["TodaySchedule"] as DEPI.DAL.Model.Schedule;
+    var isPresentToday = todaySchedule?.Status == DEPI.DAL.Enums.AttendanceStatus.Present;
+
+    // Fallback to the employee's default Shift/ProductionLine if today's
+    // schedule row doesn't have one explicitly set.
+    var todayShift = todaySchedule?.Shift ?? Model.Shift;
+    var todayProductionLine = todaySchedule?.ProductionLine ?? Model.ProductionLine;
+    var todayDepartment = todayProductionLine?.Department;
+    var todayManager = todayDepartment?.Manager;
+    var todayMission = todaySchedule?.Mission;
 
     Func<string, string> tabBtnActive = (tab) => activeTab == tab ? "active" : "";
     Func<string, string> panelActive = (tab) => activeTab == tab ? "show active" : "";
@@ -35,6 +45,75 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
+
+    <!-- Today's Attendance Card -->
+    <div class="today-card @(todaySchedule == null ? "today-card-none" : isPresentToday ? "today-card-present" : "today-card-absent") mb-4">
+        <div class="today-card-icon">
+            <i class="bi @(todaySchedule == null ? "bi-hourglass-split" : isPresentToday ? "bi-check-circle-fill" : "bi-x-circle-fill")"></i>
+        </div>
+        <div class="today-card-body">
+            <span class="today-card-date">@DateTime.Today.ToString("dddd, dd MMMM yyyy")</span>
+            @if (todaySchedule == null)
+            {
+                <span class="today-card-status">No attendance record yet for today</span>
+            }
+            else
+            {
+                <span class="today-card-status">
+                    Status: <strong>@todaySchedule.Status</strong>
+                </span>
+            }
+
+            <div class="today-card-details">
+                <span class="today-detail-item">
+                    <i class="bi bi-clock-history"></i>
+                    @if (todayShift != null)
+                    {
+                        @($"{todayShift.StartTime:hh:mm tt} - {todayShift.EndTime:hh:mm tt}")
+                        <text> &middot; @todayShift.Name</text>
+                    }
+                    else
+                    {
+                        <text>No shift assigned</text>
+                    }
+                </span>
+
+                <span class="today-detail-item">
+                    <i class="bi bi-diagram-3"></i>
+                    @(todayProductionLine?.Name ?? "No production line assigned")
+                </span>
+
+                <span class="today-detail-item">
+                    <i class="bi bi-building"></i>
+                    @(todayDepartment?.Name ?? "No department assigned")
+                </span>
+
+                <span class="today-detail-item">
+                    <i class="bi bi-person-badge"></i>
+                    @if (todayManager != null)
+                    {
+                        <text>Manager: @todayManager.FirstName @todayManager.LastName</text>
+                    }
+                    else
+                    {
+                        <text>No manager assigned</text>
+                    }
+                </span>
+
+                <span class="today-detail-item @(todayMission != null ? "today-detail-mission" : "")">
+                    <i class="bi bi-airplane"></i>
+                    @if (todayMission != null)
+                    {
+                        <text>Mission: @todayMission.Purpose (@todayMission.Status)</text>
+                    }
+                    else
+                    {
+                        <text>No mission today</text>
+                    }
+                </span>
+            </div>
+        </div>
+    </div>
 
     <div class="row g-4">
 
@@ -157,7 +236,11 @@
                                     <tr>
                                         <th>Date</th>
                                         <th>Shift</th>
+                                        <th>Shift Start</th>
+                                        <th>Shift End</th>
                                         <th>Production Line</th>
+                                        <th>Department</th>
+                                        <th>Manager</th>
                                         <th>Mission</th>
                                     </tr>
                                 </thead>
@@ -165,7 +248,7 @@
                                     @if (schedules == null || !schedules.Any())
                                     {
                                         <tr>
-                                            <td colspan="4" class="empty-state">
+                                            <td colspan="8" class="empty-state">
                                                 <i class="bi bi-calendar-x"></i>
                                                 <p>No shifts scheduled yet</p>
                                             </td>
@@ -175,11 +258,26 @@
                                     {
                                         @foreach (var item in schedules)
                                         {
-                                            <tr>
-                                                <td><span class="date-badge">@item.ScheduleDate.ToString("dd MMM yyyy")</span></td>
-                                                <td>@(item.Shift?.Name ?? "N/A")</td>
-                                                <td><span class="badge bg-primary bg-opacity-10 text-primary">@(item.ProductionLine?.Name ?? "General")</span></td>
-                                                <td>@(item.Mission?.Purpose ?? "Standard")</td>
+                                            var isToday = item.ScheduleDate.Date == DateTime.Today;
+                                            var rowShift = item.Shift ?? Model.Shift;
+                                            var rowProductionLine = item.ProductionLine ?? Model.ProductionLine;
+                                            var rowDepartment = rowProductionLine?.Department;
+                                            var rowManager = rowDepartment?.Manager;
+                                            <tr class="@(isToday ? "today-row" : "")">
+                                                <td>
+                                                    <span class="date-badge">@item.ScheduleDate.ToString("dd MMM yyyy")</span>
+                                                    @if (isToday)
+                                                    {
+                                                        <span class="today-pill">Today</span>
+                                                    }
+                                                </td>
+                                                <td>@(rowShift?.Name ?? "No shift assigned")</td>
+                                                <td>@(rowShift != null ? rowShift.StartTime.ToString("hh:mm tt") : "—")</td>
+                                                <td>@(rowShift != null ? rowShift.EndTime.ToString("hh:mm tt") : "—")</td>
+                                                <td><span class="badge bg-primary bg-opacity-10 text-primary">@(rowProductionLine?.Name ?? "No production line")</span></td>
+                                                <td>@(rowDepartment?.Name ?? "No department assigned")</td>
+                                                <td>@(rowManager != null ? $"{rowManager.FirstName} {rowManager.LastName}" : "No manager assigned")</td>
+                                                <td>@(item.Mission?.Purpose ?? "No mission")</td>
                                             </tr>
                                         }
                                     }
@@ -620,6 +718,102 @@
             outline-offset: 2px;
         }
 
+    /* Today's Attendance Card */
+    .today-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.1rem 1.5rem;
+        border-radius: 14px;
+        background: #fff;
+        border-left: 5px solid #adb5bd;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    }
+
+    .today-card-icon {
+        font-size: 1.8rem;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .today-card-date {
+        display: block;
+        font-weight: 700;
+        color: #1a1a2e;
+        font-size: 1rem;
+    }
+
+    .today-card-status {
+        color: #6c757d;
+        font-size: 0.88rem;
+    }
+
+    .today-card-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1.25rem;
+        margin-top: 0.5rem;
+    }
+
+    .today-detail-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+        color: #495057;
+    }
+
+        .today-detail-item i {
+            color: #0d6efd;
+            font-size: 0.9rem;
+        }
+
+    .today-detail-mission {
+        font-weight: 600;
+        color: #7c3aed;
+    }
+
+        .today-detail-mission i {
+            color: #7c3aed;
+        }
+
+    .today-card-sep {
+        margin: 0 0.35rem;
+        color: #ced4da;
+    }
+
+    .today-card-present {
+        border-left-color: #10b981;
+    }
+
+        .today-card-present .today-card-icon {
+            color: #10b981;
+            background: #d1fae5;
+        }
+
+    .today-card-absent {
+        border-left-color: #ef4444;
+    }
+
+        .today-card-absent .today-card-icon {
+            color: #ef4444;
+            background: #fee2e2;
+        }
+
+    .today-card-none {
+        border-left-color: #f59e0b;
+    }
+
+        .today-card-none .today-card-icon {
+            color: #f59e0b;
+            background: #fef3c7;
+        }
+
     /* Section Header */
     .section-header {
         display: flex;
@@ -685,6 +879,30 @@
             vertical-align: middle;
             font-size: 0.9rem;
         }
+
+        /* Today's row highlight in the schedule table */
+        .modern-table tbody tr.today-row {
+            background: #eef6ff;
+            box-shadow: inset 3px 0 0 #0d6efd;
+        }
+
+            .modern-table tbody tr.today-row:hover {
+                background: #e2f0ff;
+            }
+
+    .today-pill {
+        display: inline-block;
+        margin-left: 0.5rem;
+        padding: 2px 9px;
+        border-radius: 20px;
+        background: #0d6efd;
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        vertical-align: middle;
+    }
 
     /* Status Badges */
     .status-badge {
