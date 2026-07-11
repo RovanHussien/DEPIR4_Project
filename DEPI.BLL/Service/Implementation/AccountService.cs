@@ -133,7 +133,8 @@ namespace DEPI.BLL.Service.Implementation
                 Address = employeeDto.Address,
                 BirthDate = employeeDto.BirthDate,
                 Sex = employeeDto.Sex,
-                UserId = user.Id
+                UserId = user.Id,
+                FingerprintId = $"FP-{employeeDto.EmployeeId}-{new Random().Next(1000, 9999)}"
             };
 
             await _employeeRepo.AddEmployee(employee);

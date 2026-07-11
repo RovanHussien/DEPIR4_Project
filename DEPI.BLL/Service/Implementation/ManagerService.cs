@@ -17,11 +17,13 @@ namespace DEPI.BLL.Service.Implementation
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IEmailService _emailService;
 
-        public ManagerService(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public ManagerService(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IEmailService emailService)
         {
             _context = context;
             _userManager = userManager;
+            _emailService = emailService;
         }
 
         private List<string> GetEmployeeSsnsInDepartment(int departmentId)
@@ -33,7 +35,8 @@ namespace DEPI.BLL.Service.Implementation
 
             return _context.Employees
                 .Where(e => e.ProductionLineId != null
-                       && productionLineIds.Contains(e.ProductionLineId.Value))
+                       && productionLineIds.Contains(e.ProductionLineId.Value)
+                       && e.DefaultRole != "Manager")
                 .Select(e => e.EmployeeSsn)
                 .ToList();
         }
@@ -96,12 +99,14 @@ namespace DEPI.BLL.Service.Implementation
                 .ToList();
         }
 
-        public (bool Success, string ErrorMessage) ApproveLeaveRequest(int vacationRequestId, int departmentId)
+        public async Task<(bool Success, string ErrorMessage)> ApproveLeaveRequestAsync(int vacationRequestId, int departmentId)
         {
             var ssns = GetEmployeeSsnsInDepartment(departmentId);
 
-            var request = _context.VacationRequests
-                .FirstOrDefault(v => v.VacationRequestId == vacationRequestId && ssns.Contains(v.EmployeeSsn));
+            var request = await _context.VacationRequests
+                .Include(v => v.Employee)
+                    .ThenInclude(e => e.ApplicationUser)
+                .FirstOrDefaultAsync(v => v.VacationRequestId == vacationRequestId && ssns.Contains(v.EmployeeSsn));
 
             if (request == null)
                 return (false, "Leave request not found or does not belong to your department.");
@@ -110,16 +115,32 @@ namespace DEPI.BLL.Service.Implementation
                 return (false, $"This request has already been {request.Status}.");
 
             request.Status = VacationRequestStatus.Approved;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+
+            if (request.Employee?.ApplicationUser?.Email != null)
+            {
+                string subject = "Leave Request Approved";
+                string body = $@"
+                <div style='font-family: Arial, sans-serif; color: #333;'>
+                    <h2>Leave Request Approved</h2>
+                    <p>Dear {request.Employee.FirstName},</p>
+                    <p>Your leave request from <strong>{request.StartDate:dd MMM yyyy}</strong> to <strong>{request.EndDate:dd MMM yyyy}</strong> has been <strong>approved</strong>.</p>
+                    <p>Thank you.</p>
+                </div>";
+                await _emailService.SendEmailAsync(request.Employee.ApplicationUser.Email, subject, body);
+            }
+
             return (true, null);
         }
 
-        public (bool Success, string ErrorMessage) RejectLeaveRequest(int vacationRequestId, int departmentId)
+        public async Task<(bool Success, string ErrorMessage)> RejectLeaveRequestAsync(int vacationRequestId, int departmentId)
         {
             var ssns = GetEmployeeSsnsInDepartment(departmentId);
 
-            var request = _context.VacationRequests
-                .FirstOrDefault(v => v.VacationRequestId == vacationRequestId && ssns.Contains(v.EmployeeSsn));
+            var request = await _context.VacationRequests
+                .Include(v => v.Employee)
+                    .ThenInclude(e => e.ApplicationUser)
+                .FirstOrDefaultAsync(v => v.VacationRequestId == vacationRequestId && ssns.Contains(v.EmployeeSsn));
 
             if (request == null)
                 return (false, "Leave request not found or does not belong to your department.");
@@ -128,7 +149,21 @@ namespace DEPI.BLL.Service.Implementation
                 return (false, $"This request has already been {request.Status}.");
 
             request.Status = VacationRequestStatus.Rejected;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+
+            if (request.Employee?.ApplicationUser?.Email != null)
+            {
+                string subject = "Leave Request Rejected";
+                string body = $@"
+                <div style='font-family: Arial, sans-serif; color: #333;'>
+                    <h2>Leave Request Rejected</h2>
+                    <p>Dear {request.Employee.FirstName},</p>
+                    <p>Your leave request from <strong>{request.StartDate:dd MMM yyyy}</strong> to <strong>{request.EndDate:dd MMM yyyy}</strong> has been <strong>rejected</strong> by your manager.</p>
+                    <p>Please contact your manager for further details.</p>
+                </div>";
+                await _emailService.SendEmailAsync(request.Employee.ApplicationUser.Email, subject, body);
+            }
+
             return (true, null);
         }
 
@@ -214,22 +249,41 @@ namespace DEPI.BLL.Service.Implementation
             _context.Missions.Add(mission);
             _context.SaveChanges();
 
-            var schedules = new List<Schedule>();
             var currentDate = dto.StartDate.Date;
-            while (currentDate <= dto.EndDate.Date)
+            var endDate = dto.EndDate.Date;
+
+            var existingSchedules = _context.Schedules
+                .Where(s => s.EmployeeSsn == dto.GoesOnEmployeeSsn && s.ScheduleDate >= currentDate && s.ScheduleDate <= endDate)
+                .ToList();
+
+            var newSchedules = new List<Schedule>();
+
+            while (currentDate <= endDate)
             {
-                schedules.Add(new Schedule
+                var existingSchedule = existingSchedules.FirstOrDefault(s => s.ScheduleDate.Date == currentDate);
+                if (existingSchedule != null)
                 {
-                    ScheduleName = $"Mission - {dto.Purpose} ({currentDate:dd/MM/yyyy})",
-                    ScheduleDate = currentDate,
-                    EmployeeSsn = dto.GoesOnEmployeeSsn,
-                    ShiftId = employee.ShiftId,
-                    MissionId = mission.MissionId,
-                });
+                    existingSchedule.MissionId = mission.MissionId;
+                    existingSchedule.ScheduleName = $"Mission - {dto.Purpose} ({currentDate:dd/MM/yyyy})";
+                }
+                else
+                {
+                    newSchedules.Add(new Schedule
+                    {
+                        ScheduleName = $"Mission - {dto.Purpose} ({currentDate:dd/MM/yyyy})",
+                        ScheduleDate = currentDate,
+                        EmployeeSsn = dto.GoesOnEmployeeSsn,
+                        ShiftId = employee.ShiftId,
+                        ProductionLineId = employee.ProductionLineId,
+                        MissionId = mission.MissionId,
+                    });
+                }
                 currentDate = currentDate.AddDays(1);
             }
 
-            _context.Schedules.AddRange(schedules);
+            if (newSchedules.Any())
+                _context.Schedules.AddRange(newSchedules);
+
             _context.SaveChanges();
             return (true, null);
         }
@@ -498,12 +552,16 @@ namespace DEPI.BLL.Service.Implementation
             return true;
         }
 
-        public (bool Success, string ErrorMessage) ExecuteSwap(int requestId, int departmentId)
+        public async Task<(bool Success, string ErrorMessage)> ExecuteSwapAsync(int requestId, int departmentId)
         {
             var ssns = GetEmployeeSsnsInDepartment(departmentId);
-            var request = _context.SwapRequests
+            var request = await _context.SwapRequests
                 .Include(r => r.Schedule)
-                .FirstOrDefault(r => r.RequestId == requestId);
+                .Include(r => r.RequestEmployee)
+                    .ThenInclude(e => e.ApplicationUser)
+                .Include(r => r.RecipientEmployee)
+                    .ThenInclude(e => e.ApplicationUser)
+                .FirstOrDefaultAsync(r => r.RequestId == requestId);
 
             if (request == null || !ssns.Contains(request.RequestingEmployeeId))
                 return (false, "Swap request not found.");
@@ -523,8 +581,8 @@ namespace DEPI.BLL.Service.Implementation
             if (!ssns.Contains(request.RecipientEmployeeId))
                 return (false, "Recipient is not in your department.");
 
-            var recipientSchedule = _context.Schedules
-                .FirstOrDefault(s => s.EmployeeSsn == request.RecipientEmployeeId
+            var recipientSchedule = await _context.Schedules
+                .FirstOrDefaultAsync(s => s.EmployeeSsn == request.RecipientEmployeeId
                                   && s.ScheduleDate.Date == requestingSchedule.ScheduleDate.Date
                                   && s.ShiftId != null);
 
@@ -536,14 +594,45 @@ namespace DEPI.BLL.Service.Implementation
             recipientSchedule.ShiftId = tempShiftId;
 
             request.Status = SwapRequestStatus.FinalApproved;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+
+            // Send Email to Requesting Employee
+            if (request.RequestEmployee?.ApplicationUser?.Email != null)
+            {
+                string subject = "Shift Swap Approved";
+                string body = $@"
+                <div style='font-family: Arial, sans-serif; color: #333;'>
+                    <h2>Shift Swap Approved</h2>
+                    <p>Dear {request.RequestEmployee.FirstName},</p>
+                    <p>Your shift swap request on <strong>{requestingSchedule.ScheduleDate:dd MMM yyyy}</strong> with {request.RecipientEmployee?.FirstName} has been <strong>approved</strong> by your manager.</p>
+                </div>";
+                await _emailService.SendEmailAsync(request.RequestEmployee.ApplicationUser.Email, subject, body);
+            }
+
+            // Send Email to Recipient Employee
+            if (request.RecipientEmployee?.ApplicationUser?.Email != null)
+            {
+                string subject = "Shift Swap Approved";
+                string body = $@"
+                <div style='font-family: Arial, sans-serif; color: #333;'>
+                    <h2>Shift Swap Approved</h2>
+                    <p>Dear {request.RecipientEmployee.FirstName},</p>
+                    <p>The shift swap request on <strong>{requestingSchedule.ScheduleDate:dd MMM yyyy}</strong> with {request.RequestEmployee?.FirstName} has been <strong>approved</strong> by your manager.</p>
+                </div>";
+                await _emailService.SendEmailAsync(request.RecipientEmployee.ApplicationUser.Email, subject, body);
+            }
+
             return (true, "Shift swap executed successfully.");
         }
 
-        public (bool Success, string ErrorMessage) RejectSwap(int requestId, int departmentId)
+        public async Task<(bool Success, string ErrorMessage)> RejectSwapAsync(int requestId, int departmentId)
         {
             var ssns = GetEmployeeSsnsInDepartment(departmentId);
-            var request = _context.SwapRequests.Find(requestId);
+            var request = await _context.SwapRequests
+                .Include(r => r.Schedule)
+                .Include(r => r.RequestEmployee)
+                    .ThenInclude(e => e.ApplicationUser)
+                .FirstOrDefaultAsync(r => r.RequestId == requestId);
 
             if (request == null || !ssns.Contains(request.RequestingEmployeeId))
                 return (false, "Swap request not found.");
@@ -558,7 +647,20 @@ namespace DEPI.BLL.Service.Implementation
                 return (false, "This request has already been rejected.");
 
             request.Status = SwapRequestStatus.FinalRejected;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+
+            if (request.RequestEmployee?.ApplicationUser?.Email != null)
+            {
+                string subject = "Shift Swap Rejected";
+                string body = $@"
+                <div style='font-family: Arial, sans-serif; color: #333;'>
+                    <h2>Shift Swap Rejected</h2>
+                    <p>Dear {request.RequestEmployee.FirstName},</p>
+                    <p>Your shift swap request on <strong>{request.Schedule?.ScheduleDate:dd MMM yyyy}</strong> has been <strong>rejected</strong> by your manager.</p>
+                </div>";
+                await _emailService.SendEmailAsync(request.RequestEmployee.ApplicationUser.Email, subject, body);
+            }
+
             return (true, null);
         }
         public List<EmployeeScheduleRangeDto> GetDepartmentScheduleRanges(int departmentId, DateTime? date)

@@ -8,10 +8,7 @@ using DEPI.DAL.Repo.Interfaces;
 using DEPI.DAL.Repo.Implementation;
 using DEPI.BLL.Service.Implementation;
 using DEPI.BLL.Service.Interfaces;
-using Serilog;
 using DEPI.BLL.BackgroundServices;
-using DEPI_Pro.Middleware;
-
 
 namespace DEPI_Pro
 {
@@ -20,13 +17,6 @@ namespace DEPI_Pro
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
-            // ── Serilog Structured Logging ──
-            builder.Host.UseSerilog((ctx, lc) => lc
-                .ReadFrom.Configuration(ctx.Configuration)
-                .Enrich.FromLogContext()
-                .WriteTo.Console()
-                .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30));
 
             builder.Services.AddScoped<IManagerService, ManagerService>();
             // Add services to the container.
@@ -53,7 +43,6 @@ namespace DEPI_Pro
             builder.Services.AddScoped<IVacationRequestRepo, VacationRequestRepo>();
             builder.Services.AddScoped<ISwapRequestRepo, SwapRequestRepo>();
             builder.Services.AddScoped<IAttendanceRepo, AttendanceRepo>();
-
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
             builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 
@@ -78,20 +67,13 @@ namespace DEPI_Pro
                 await SeedAdminUser(userManager);
                 await SeedManagerUsers(userManager, context);
                 await SeedManagerDepartment(context);
-                await SeedFingerprintIds(context);
             }
-
-            // ── Global Exception Handling Middleware ──
-            app.UseMiddleware<GlobalExceptionMiddleware>();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
             }
-
-            // Serilog request logging for structured HTTP logs
-            app.UseSerilogRequestLogging();
 
             app.UseRouting();
 
@@ -219,7 +201,8 @@ namespace DEPI_Pro
                         PhoneNumber = 123456789,
                         VacationBalance = 30,
                         DefaultRole = "Manager",
-                        UserId = user.Id
+                        UserId = user.Id,
+                        FingerprintId = $"FP-{ssn}-0001"
                     };
                     context.Employees.Add(employee);
                     await context.SaveChangesAsync();
@@ -265,27 +248,6 @@ namespace DEPI_Pro
             Console.WriteLine("✓ Created new department and linked it to Manager (MGR001)");
         }
 
-        private static async Task SeedFingerprintIds(ApplicationDbContext context)
-        {
-            var employeesWithoutFingerprint = await context.Employees
-                .Where(e => e.FingerprintId == null)
-                .ToListAsync();
 
-            if (!employeesWithoutFingerprint.Any())
-            {
-                Console.WriteLine("✓ All employees already have fingerprint IDs assigned");
-                return;
-            }
-
-            int counter = 1;
-            foreach (var employee in employeesWithoutFingerprint)
-            {
-                employee.FingerprintId = $"FP-{employee.EmployeeSsn}-{counter:D4}";
-                counter++;
-            }
-
-            await context.SaveChangesAsync();
-            Console.WriteLine($"✓ Assigned fingerprint IDs to {employeesWithoutFingerprint.Count} employees");
-        }
     }
 }

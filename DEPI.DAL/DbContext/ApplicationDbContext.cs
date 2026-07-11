@@ -200,6 +200,10 @@ namespace DEPI.DAL.DbContext
             {
                 entity.HasKey(sr => sr.RequestId);
 
+                entity.Property(sr => sr.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
                 entity.HasOne(sr => sr.RequestEmployee)
                     .WithMany(e => e.SentSwapRequests)
                     .HasForeignKey(sr => sr.RequestingEmployeeId)

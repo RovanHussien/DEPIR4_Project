@@ -56,6 +56,7 @@ namespace DEPI.BLL.Service.Implementation
             catch (Exception ex)
             {
                 Console.WriteLine($"✗ Failed to send email to {toEmail}: {ex.Message}");
+                System.IO.File.AppendAllText(@"C:\DEPI_R4\email_error.txt", $"Failed to send to {toEmail} at {DateTime.Now}: {ex.ToString()}\n");
             }
         }
 

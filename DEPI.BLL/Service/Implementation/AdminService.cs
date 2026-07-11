@@ -261,6 +261,7 @@ namespace DEPI.BLL.Service.Implementation
                 ProductionLineId = userDto.ProductionLineId > 0 ? userDto.ProductionLineId : null,
                 UserId = applicationUser.Id
             };
+            employee.FingerprintId = $"FP-{employee.EmployeeSsn}-{new Random().Next(1000, 9999)}";
 
             var empResult = await _employeeRepo.AddEmployee(employee);
             if (empResult != IdentityResult.Success)

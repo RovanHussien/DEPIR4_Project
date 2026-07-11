@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Security.Claims;
 using DEPI.BLL.DTO;
@@ -141,12 +141,12 @@ namespace DEPI.PLL.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ApproveLeave(int id)
+        public async Task<IActionResult> ApproveLeave(int id)
         {
             var deptId = CurrentDepartmentId();
             if (deptId == null) return Forbid();
 
-            var (success, error) = _managerService.ApproveLeaveRequest(id, deptId.Value);
+            var (success, error) = await _managerService.ApproveLeaveRequestAsync(id, deptId.Value);
             TempData[success ? "SuccessMessage" : "ErrorMessage"] = success
                 ? "Leave request approved successfully." : error;
             return RedirectToAction(nameof(Leaves));
@@ -154,12 +154,12 @@ namespace DEPI.PLL.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult RejectLeave(int id)
+        public async Task<IActionResult> RejectLeave(int id)
         {
             var deptId = CurrentDepartmentId();
             if (deptId == null) return Forbid();
 
-            var (success, error) = _managerService.RejectLeaveRequest(id, deptId.Value);
+            var (success, error) = await _managerService.RejectLeaveRequestAsync(id, deptId.Value);
             TempData[success ? "SuccessMessage" : "ErrorMessage"] = success
                 ? "Leave request rejected successfully." : error;
             return RedirectToAction(nameof(Leaves));
@@ -174,12 +174,12 @@ namespace DEPI.PLL.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ApproveSwap(int id)
+        public async Task<IActionResult> ApproveSwap(int id)
         {
             var deptId = CurrentDepartmentId();
             if (deptId == null) return Forbid();
 
-            var (success, error) = _managerService.ExecuteSwap(id, deptId.Value);
+            var (success, error) = await _managerService.ExecuteSwapAsync(id, deptId.Value);
             TempData[success ? "SuccessMessage" : "ErrorMessage"] = success
                 ? "Swap executed successfully." : error;
             return RedirectToAction(nameof(ShiftChanges));
@@ -187,12 +187,12 @@ namespace DEPI.PLL.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult RejectSwap(int id)
+        public async Task<IActionResult> RejectSwap(int id)
         {
             var deptId = CurrentDepartmentId();
             if (deptId == null) return Forbid();
 
-            var (success, error) = _managerService.RejectSwap(id, deptId.Value);
+            var (success, error) = await _managerService.RejectSwapAsync(id, deptId.Value);
             TempData[success ? "SuccessMessage" : "ErrorMessage"] = success
                 ? "Swap request rejected." : error;
             return RedirectToAction(nameof(ShiftChanges));

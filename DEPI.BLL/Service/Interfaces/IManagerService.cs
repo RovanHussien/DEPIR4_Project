@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DEPI.BLL.DTO;
@@ -13,8 +13,8 @@ namespace DEPI.BLL.Service.Interfaces
         List<ManagerEmployeeDto> GetDepartmentEmployees(int departmentId);
 
         List<ManagerLeaveRequestDto> GetDepartmentLeaveRequests(int departmentId);
-        (bool Success, string ErrorMessage) ApproveLeaveRequest(int vacationRequestId, int departmentId);
-        (bool Success, string ErrorMessage) RejectLeaveRequest(int vacationRequestId, int departmentId);
+        Task<(bool Success, string ErrorMessage)> ApproveLeaveRequestAsync(int vacationRequestId, int departmentId);
+        Task<(bool Success, string ErrorMessage)> RejectLeaveRequestAsync(int vacationRequestId, int departmentId);
 
         List<ManagerShiftChangeDto> GetDepartmentShiftChanges(int departmentId);
 
@@ -33,8 +33,8 @@ namespace DEPI.BLL.Service.Interfaces
         List<EmployeeScheduleDto> GetDepartmentSchedules(int departmentId, DateTime? date);
         (bool Success, string ErrorMessage) AssignShiftToEmployee(AssignShiftDto dto, int departmentId);
         bool RemoveSchedule(int scheduleId, int departmentId);
-        (bool Success, string ErrorMessage) ExecuteSwap(int requestId, int departmentId);
-        (bool Success, string ErrorMessage) RejectSwap(int requestId, int departmentId);
+        Task<(bool Success, string ErrorMessage)> ExecuteSwapAsync(int requestId, int departmentId);
+        Task<(bool Success, string ErrorMessage)> RejectSwapAsync(int requestId, int departmentId);
         List<EmployeeScheduleRangeDto> GetDepartmentScheduleRanges(int departmentId, DateTime? date);
     }
 }

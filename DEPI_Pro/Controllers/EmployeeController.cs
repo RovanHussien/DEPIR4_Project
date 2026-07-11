@@ -1,4 +1,4 @@
-﻿using DEPI.BLL.Service.Interfaces;
+using DEPI.BLL.Service.Interfaces;
 using DEPI.DAL.Model;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -143,5 +143,48 @@ namespace DEPI.PLL.Controllers
             return RedirectToAction(nameof(Profile), new { ssn = employee.EmployeeSsn, tab = "requests" });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetColleagueShift(int scheduleId, string colleagueSsn)
+        {
+            if (scheduleId <= 0 || string.IsNullOrEmpty(colleagueSsn))
+                return Json(new { success = false, message = "Invalid input." });
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                      ?? User.FindFirst(c => c.Type == "sub")?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return Json(new { success = false, message = "User not found." });
+
+            var me = await _employeeService.GetEmployeeByUserIdAsync(userId);
+            if (me == null)
+                return Json(new { success = false, message = "Employee not found." });
+
+            var mySchedules = await _employeeService.GetMyScheduleAsync(me.EmployeeSsn);
+            var mySchedule = mySchedules.FirstOrDefault(s => s.ScheduleId == scheduleId);
+
+            if (mySchedule == null)
+                return Json(new { success = false, message = "Your schedule was not found." });
+
+            var collSchedules = await _employeeService.GetMyScheduleAsync(colleagueSsn);
+            var collSchedule = collSchedules.FirstOrDefault(s => s.ScheduleDate.Date == mySchedule.ScheduleDate.Date && s.ShiftId != null);
+
+            if (collSchedule == null || collSchedule.Shift == null)
+            {
+                return Json(new { success = false, message = "Colleague has no shift scheduled on this date." });
+            }
+
+            if (collSchedule.ShiftId == mySchedule.ShiftId)
+            {
+                return Json(new { success = false, message = "Colleague is on the SAME shift as you on this date!" });
+            }
+
+            return Json(new
+            {
+                success = true,
+                shiftName = collSchedule.Shift.Name,
+                startTime = collSchedule.Shift.StartTime.ToString(@"hh\:mm"),
+                endTime = collSchedule.Shift.EndTime.ToString(@"hh\:mm")
+            });
+        }
     }
 }

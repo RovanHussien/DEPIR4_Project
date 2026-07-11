@@ -1,4 +1,4 @@
-﻿@model DEPI.DAL.Model.Employee
+@model DEPI.DAL.Model.Employee
 
 @{
     var activeTab = ViewData["ActiveTab"]?.ToString() ?? "schedule";
@@ -295,19 +295,33 @@
                         <div class="form-card">
                             <form asp-action="RequestSwap" method="post">
                                 <input type="hidden" name="requestingSsn" value="@Model.EmployeeSsn" />
-                                <input type="hidden" name="scheduleId" value="" />
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">Select Your Shift to Swap</label>
+                                    <select name="scheduleId" id="swapScheduleId" class="form-select" required>
+                                        <option value="">-- Select a Shift --</option>
+                                        @if (schedules != null && schedules.Any(s => s.ScheduleDate.Date >= DateTime.Today && s.ShiftId != null))
+                                        {
+                                            foreach (var s in schedules.Where(s => s.ScheduleDate.Date >= DateTime.Today && s.ShiftId != null).OrderBy(s => s.ScheduleDate))
+                                            {
+                                                <option value="@s.ScheduleId">@s.ScheduleDate.ToString("dd MMM yyyy") - @s.Shift?.Name</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
                                 <div class="mb-4">
                                     <label class="form-label fw-semibold">Colleague SSN</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
-                                        <input type="text" name="recipientSsn" class="form-control" placeholder="Enter colleague's SSN" required />
+                                        <input type="text" name="recipientSsn" id="swapColleagueSsn" class="form-control" placeholder="Enter colleague's SSN" required />
+                                        <button type="button" id="btnCheckShift" class="btn btn-secondary">Check Shift</button>
                                     </div>
+                                    <div id="colleagueShiftResult" class="mt-2 text-muted small" style="display:none;"></div>
                                 </div>
                                 <div class="mb-4">
                                     <label class="form-label fw-semibold">Reason</label>
                                     <textarea name="reason" class="form-control" rows="3" placeholder="Why do you need to swap?" required></textarea>
                                 </div>
-                                <button type="submit" class="btn btn-warning fw-bold px-4">
+                                <button type="submit" id="btnSubmitSwap" class="btn btn-warning fw-bold px-4" disabled>
                                     <i class="bi bi-send-fill me-2"></i> Submit Request
                                 </button>
                             </form>
@@ -1030,6 +1044,63 @@
             var hash = window.location.hash ? window.location.hash.substring(1) : null;
             if (hash && document.getElementById(hash)) {
                 activateTab(hash);
+            }
+            
+            // Swap Shift AJAX Logic
+            var btnCheckShift = document.getElementById('btnCheckShift');
+            var colleagueSsnInput = document.getElementById('swapColleagueSsn');
+            var scheduleIdSelect = document.getElementById('swapScheduleId');
+            var resultDiv = document.getElementById('colleagueShiftResult');
+            var btnSubmitSwap = document.getElementById('btnSubmitSwap');
+
+            if(btnCheckShift) {
+                btnCheckShift.addEventListener('click', function() {
+                    var ssn = colleagueSsnInput.value.trim();
+                    var schedId = scheduleIdSelect.value;
+                    
+                    if(!schedId) {
+                        resultDiv.style.display = 'block';
+                        resultDiv.className = 'mt-2 small text-danger';
+                        resultDiv.innerHTML = '<i class="bi bi-exclamation-circle"></i> Please select your shift first.';
+                        btnSubmitSwap.disabled = true;
+                        return;
+                    }
+                    if(!ssn) {
+                        resultDiv.style.display = 'block';
+                        resultDiv.className = 'mt-2 small text-danger';
+                        resultDiv.innerHTML = '<i class="bi bi-exclamation-circle"></i> Please enter your colleague\'s SSN.';
+                        btnSubmitSwap.disabled = true;
+                        return;
+                    }
+
+                    resultDiv.style.display = 'block';
+                    resultDiv.className = 'mt-2 small text-primary';
+                    resultDiv.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Checking...';
+                    btnSubmitSwap.disabled = true;
+
+                    fetch(`/Employee/GetColleagueShift?scheduleId=${schedId}&colleagueSsn=${encodeURIComponent(ssn)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if(data.success) {
+                                resultDiv.className = 'mt-2 small text-success';
+                                resultDiv.innerHTML = `<i class="bi bi-check-circle-fill"></i> Colleague Shift: <strong>${data.shiftName}</strong> (${data.startTime} - ${data.endTime})`;
+                                btnSubmitSwap.disabled = false;
+                            } else {
+                                resultDiv.className = 'mt-2 small text-danger';
+                                resultDiv.innerHTML = `<i class="bi bi-exclamation-circle-fill"></i> ${data.message}`;
+                                btnSubmitSwap.disabled = true;
+                            }
+                        })
+                        .catch(err => {
+                            resultDiv.className = 'mt-2 small text-danger';
+                            resultDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> An error occurred while checking.';
+                            btnSubmitSwap.disabled = true;
+                        });
+                });
+                
+                // Also require re-check if they change inputs
+                scheduleIdSelect.addEventListener('change', function() { btnSubmitSwap.disabled = true; resultDiv.style.display = 'none'; });
+                colleagueSsnInput.addEventListener('input', function() { btnSubmitSwap.disabled = true; resultDiv.style.display = 'none'; });
             }
         });
     })();

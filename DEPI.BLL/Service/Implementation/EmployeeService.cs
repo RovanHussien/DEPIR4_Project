@@ -1,4 +1,4 @@
-﻿using DEPI.BLL.Service.Interfaces;
+using DEPI.BLL.Service.Interfaces;
 using DEPI.DAL.Enums;
 using DEPI.DAL.Model;
 using DEPI.DAL.Repo.Interfaces;
@@ -51,6 +51,8 @@ namespace DEPI.BLL.Service.Implementation
 
         public async Task<bool> CreateSwapRequestAsync(int scheduleId, string requestingEmpSsn, string recipientEmpSsn, string reason)
         {
+            if (scheduleId <= 0)
+                throw new Exception("You must select a specific shift to swap.");
 
             var requestingEmployee = await _employeeRepo.GetEmployeeById(requestingEmpSsn);
             var recipientEmployee = await _employeeRepo.GetEmployeeById(recipientEmpSsn);
@@ -58,20 +60,21 @@ namespace DEPI.BLL.Service.Implementation
             if (requestingEmployee == null || recipientEmployee == null)
                 throw new Exception("Employee not found!");
 
-            var requestingSchedule = await _scheduleRepo.GetScheduleByEmployeeSsnAsync(requestingEmpSsn);
-            var recipientSchedule = await _scheduleRepo.GetScheduleByEmployeeSsnAsync(recipientEmpSsn);
+            var requestingSchedules = await _scheduleRepo.GetScheduleByEmployeeSsnAsync(requestingEmpSsn);
+            var specificSchedule = requestingSchedules.FirstOrDefault(s => s.ScheduleId == scheduleId);
 
-            if (requestingSchedule.Any() && recipientSchedule.Any())
-            {
-                var requestingShiftIds = requestingSchedule.Select(s => s.ShiftId).ToList();
-                var recipientShiftIds = recipientSchedule.Select(s => s.ShiftId).ToList();
+            if (specificSchedule == null)
+                throw new Exception("The selected schedule was not found.");
 
-                if (requestingShiftIds.Intersect(recipientShiftIds).Any())
-                    throw new Exception("You cannot request a swap with an employee on the same shift!");
-            }
+            var recipientSchedules = await _scheduleRepo.GetScheduleByEmployeeSsnAsync(recipientEmpSsn);
+            var recipientScheduleOnDate = recipientSchedules.FirstOrDefault(s => s.ScheduleDate.Date == specificSchedule.ScheduleDate.Date && s.ShiftId != null);
+
+            if (recipientScheduleOnDate != null && specificSchedule.ShiftId == recipientScheduleOnDate.ShiftId)
+                throw new Exception("You cannot request a swap with an employee on the same shift!");
+
             var swapRequest = new SwapRequest
             {
-                ScheduleId = scheduleId == 0 ? null : scheduleId,
+                ScheduleId = scheduleId,
                 RequestingEmployeeId = requestingEmpSsn,
                 RecipientEmployeeId = recipientEmpSsn,
                 Reason = reason
